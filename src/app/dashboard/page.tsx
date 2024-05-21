@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface User {
@@ -28,10 +28,13 @@ const DashboardPage = () => {
           setUser(userSession);
         } catch (error) {
           console.error('Failed to parse user session:', error);
+          router.push('/login');
         }
+      } else {
+        router.push('/login');
       }
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -52,7 +55,16 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+const WrappedDashboardPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardPage />
+    </Suspense>
+  );
+};
+
+export default WrappedDashboardPage;
+
 
 
 

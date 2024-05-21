@@ -1,7 +1,7 @@
-
 "use client"
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -10,23 +10,25 @@ const DashboardPage = () => {
   const [studentName, setStudentName] = useState('');
 
   useEffect(() => {
-    const name = searchParams.get('name');
-    const userParam = searchParams.get('user');
+    if (typeof window !== 'undefined') {
+      const name = searchParams.get('name');
+      const userParam = searchParams.get('user');
 
-    if (name) {
-      setStudentName(name);
-    }
+      if (name) {
+        setStudentName(name);
+      }
 
-    if (userParam) {
-      try {
-        const userSession = JSON.parse(decodeURIComponent(userParam));
-        setUser(userSession);
-      } catch (error) {
-        console.error('Failed to parse user session:', error);
+      if (userParam) {
+        try {
+          const userSession = JSON.parse(decodeURIComponent(userParam));
+          setUser(userSession);
+        } catch (error) {
+          console.error('Failed to parse user session:', error);
+          router.push('/login');
+        }
+      } else {
         router.push('/login');
       }
-    } else {
-      router.push('/login');
     }
   }, [router, searchParams]);
 
@@ -58,6 +60,7 @@ const WrappedDashboardPage = () => {
 };
 
 export default WrappedDashboardPage;
+
 
 
 

@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface User {
@@ -19,8 +19,6 @@ const DashboardPage = () => {
 
     if (name) {
       setStudentName(name);
-    } else {
-      router.push('/login');
     }
 
     if (userParam) {
@@ -34,7 +32,7 @@ const DashboardPage = () => {
     } else {
       router.push('/login');
     }
-  }, [router, searchParams]);
+  }, [searchParams, router]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -55,7 +53,16 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+const WrappedDashboardPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardPage />
+    </Suspense>
+  );
+};
+
+export default WrappedDashboardPage;
+
 
 
 

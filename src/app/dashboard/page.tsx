@@ -1,12 +1,16 @@
 "use client"
-
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+interface User {
+  name: string;
+  // 他のプロパティがあればここに追加
+}
 
 const DashboardPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [studentName, setStudentName] = useState('');
 
   useEffect(() => {
@@ -49,6 +53,7 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
 
 
 

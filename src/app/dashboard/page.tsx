@@ -1,7 +1,7 @@
 "use client"
-import { useEffect, useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -24,13 +24,10 @@ const DashboardPage = () => {
           setUser(userSession);
         } catch (error) {
           console.error('Failed to parse user session:', error);
-          router.push('/login');
         }
-      } else {
-        router.push('/login');
       }
     }
-  }, [router, searchParams]);
+  }, [searchParams]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -43,7 +40,7 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h1>Welcome, {user[0]}</h1>
+      <h1>Welcome, {user.name}</h1>
       <h2>Student: {studentName}</h2>
       <button onClick={handleRedirect}>PHPページへ戻る</button>
       {/* 他のコンテンツ */}
@@ -51,15 +48,8 @@ const DashboardPage = () => {
   );
 };
 
-const WrappedDashboardPage = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <DashboardPage />
-    </Suspense>
-  );
-};
+export default DashboardPage;
 
-export default WrappedDashboardPage;
 
 
 

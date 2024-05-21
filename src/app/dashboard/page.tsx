@@ -47,7 +47,7 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h1>Welcome, {user[0]}</h1>
+      <h1>Welcome, {user.name}</h1>
       <h2>Student: {studentName}</h2>
       <button onClick={handleRedirect}>PHPページへ戻る</button>
       {/* 他のコンテンツ */}
@@ -64,6 +64,7 @@ const WrappedDashboardPage = () => {
 };
 
 export default WrappedDashboardPage;
+
 
 
 

@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface User {
   name: string;
@@ -9,36 +9,32 @@ interface User {
 
 const DashboardPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [studentName, setStudentName] = useState('');
 
   useEffect(() => {
-    const storedStudentName = sessionStorage.getItem('studentName');
-    const storedUser = sessionStorage.getItem('userSession');
+    const name = searchParams.get('name');
+    const userParam = searchParams.get('user');
 
-    console.log('Stored student name:', storedStudentName);
-    console.log('Stored user session:', storedUser);
-
-    if (storedStudentName) {
-      setStudentName(storedStudentName);
+    if (name) {
+      setStudentName(name);
     } else {
-      console.log('No student name found, redirecting to login');
       router.push('/login');
     }
 
-    if (storedUser) {
+    if (userParam) {
       try {
-        const userSession = JSON.parse(storedUser);
+        const userSession = JSON.parse(decodeURIComponent(userParam));
         setUser(userSession);
       } catch (error) {
         console.error('Failed to parse user session:', error);
         router.push('/login');
       }
     } else {
-      console.log('No user session found, redirecting to login');
       router.push('/login');
     }
-  }, [router]);
+  }, [router, searchParams]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -60,6 +56,7 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
 
 
 

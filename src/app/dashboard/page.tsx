@@ -1,5 +1,6 @@
+
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const DashboardPage = () => {
@@ -40,7 +41,7 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h1>Welcome, {user[0]}</h1>
+      <h1>Welcome, {user.name}</h1>
       <h2>Student: {studentName}</h2>
       <button onClick={handleRedirect}>PHPページへ戻る</button>
       {/* 他のコンテンツ */}
@@ -48,7 +49,16 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+const WrappedDashboardPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardPage />
+    </Suspense>
+  );
+};
+
+export default WrappedDashboardPage;
+
 
 
 

@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface User {
@@ -7,7 +7,7 @@ interface User {
   // 他のプロパティがあればここに追加
 }
 
-const DashboardPage = () => {
+const DashboardContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -66,7 +66,16 @@ const DashboardPage = () => {
   );
 };
 
+const DashboardPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
+  );
+};
+
 export default DashboardPage;
+
 
 
 

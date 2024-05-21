@@ -16,9 +16,13 @@ const DashboardPage = () => {
     const storedStudentName = sessionStorage.getItem('studentName');
     const storedUser = sessionStorage.getItem('userSession');
 
+    console.log('Stored student name:', storedStudentName);
+    console.log('Stored user session:', storedUser);
+
     if (storedStudentName) {
       setStudentName(storedStudentName);
     } else {
+      console.log('No student name found, redirecting to login');
       router.push('/login');
     }
 
@@ -31,6 +35,7 @@ const DashboardPage = () => {
         router.push('/login');
       }
     } else {
+      console.log('No user session found, redirecting to login');
       router.push('/login');
     }
   }, [router]);
@@ -55,6 +60,7 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
 
 
 

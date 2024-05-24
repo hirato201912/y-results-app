@@ -4,61 +4,57 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header('Content-Type: application/json');
 
-$apiKey = '0401_predefined_api_key';
-$receivedApiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
+// 事前に定義されたAPIキー
+$definedApiKey = '0401_predefined_api_key';
 
-if ($receivedApiKey !== $apiKey) {
+$apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
+$studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
+
+// APIキーの検証
+if ($apiKey !== $definedApiKey) {
     die(json_encode(array("error" => "Invalid API Key")));
 }
 
-$studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
-
+// データベース接続の作成
 $conn = mysqli_connect("mysql749.db.sakura.ne.jp", "mikawayatsuhashi", "yatsuhashi2019", "mikawayatsuhashi_db_yatsuhasi");
 
+// 接続確認
 if ($conn->connect_error) {
     die(json_encode(array("error" => $conn->connect_error)));
 }
 
+// SQL クエリ実行（テスト情報を取得）
 $sql = "
 SELECT 
-    p.week, 
-    p.english, 
-    p.math, 
-    p.science, 
-    p.social, 
-    p.japanese, 
-    t.test_name,
-    s.student,
-    s.belonging,
-    s.grade
+    t.test_id, 
+    t.test_name, 
+    t.test_date
 FROM 
-    west_progress p
+    tests t
 JOIN 
-    west_student s ON p.student_id = s.west_student_id
-JOIN 
-    tests t ON p.test_id = t.test_id
+    west_student s ON t.school_id = s.school_id
 WHERE 
     s.student = ?
-ORDER BY 
-    t.test_name, p.week
 ";
-
 $stmt = $conn->prepare($sql);
-if (!$stmt) {
-    die(json_encode(array("error" => "Failed to prepare statement: " . $conn->error)));
-}
 $stmt->bind_param("s", $studentName);
 $stmt->execute();
 $result = $stmt->get_result();
 
-$progressData = array();
-while($row = $result->fetch_assoc()) {
-    array_push($progressData, $row);
+// 結果を配列に格納
+$tests = array();
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        array_push($tests, $row);
+    }
 }
 
-echo json_encode(array("students" => $progressData));
+// JSON 形式で出力
+echo json_encode(array("tests" => $tests));
 
+// 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>
+
 

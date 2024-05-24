@@ -8,6 +8,7 @@ header('Content-Type: application/json');
 $definedApiKey = '0401_predefined_api_key';
 
 $apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
+$studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
 
 // APIキーの検証
 if ($apiKey !== $definedApiKey) {
@@ -22,37 +23,36 @@ if ($conn->connect_error) {
     die(json_encode(array("error" => $conn->connect_error)));
 }
 
-// SQL クエリ実行（生徒情報を取得）
+// SQL クエリ実行（テスト情報を取得）
 $sql = "
 SELECT 
-    s.west_student_id as student_id, 
-    s.student, 
-    ms.school_name as belonging, 
-    g.grade_name as grade
+    t.test_id, 
+    t.test_name, 
+    t.start_date
 FROM 
-    west_student s
+    tests t
 JOIN 
-    middle_schools ms ON s.school_id = ms.school_id
-JOIN 
-    grades g ON s.grade_id = g.grade_id
+    west_student s ON t.school_id = s.school_id
+WHERE 
+    s.student = ?
 ";
-$result = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $studentName);
+$stmt->execute();
+$result = $stmt->get_result();
 
 // 結果を配列に格納
-$students = array();
+$tests = array();
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        array_push($students, $row);
+        array_push($tests, $row);
     }
 }
 
 // JSON 形式で出力
-echo json_encode(array("students" => $students));
+echo json_encode(array("tests" => $tests));
 
 // 接続を閉じる
+$stmt->close();
 $conn->close();
 ?>
-
-
-
-

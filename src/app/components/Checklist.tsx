@@ -1,6 +1,6 @@
 "use client"
-import React, { useEffect, useState, Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import React, { useEffect, useState } from 'react';
+
 
 const Checklist = ({ studentName }) => {
   const [tests, setTests] = useState([]);
@@ -25,6 +25,20 @@ const Checklist = ({ studentName }) => {
       .catch(error => console.error('Error fetching tests:', error));
   }, [studentName]);
 
+  useEffect(() => {
+    if (selectedTest && selectedWeek) {
+      const apiKey = '0401_predefined_api_key';
+      fetch(`http://mikawayatsuhashi.sakura.ne.jp/west_fetch_progress.php?apiKey=${apiKey}&studentName=${studentName}&testId=${selectedTest}&week=${selectedWeek}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.progress) {
+            setProgress(data.progress);
+          }
+        })
+        .catch(error => console.error('Error fetching progress:', error));
+    }
+  }, [selectedTest, selectedWeek, studentName]);
+
   const toggleProgress = (subject) => {
     setProgress((prevProgress) => ({
       ...prevProgress,
@@ -33,12 +47,29 @@ const Checklist = ({ studentName }) => {
   };
 
   const handleSave = () => {
-    setIsModalOpen(true);
-  };
-
-  const confirmSave = () => {
-    // 進捗データを保存するための処理を追加
-    setIsModalOpen(false);
+    const apiKey = '0401_predefined_api_key';
+    fetch(`http://mikawayatsuhashi.sakura.ne.jp/west_save_progress.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiKey
+      },
+      body: JSON.stringify({
+        studentName,
+        testId: selectedTest,
+        week: selectedWeek,
+        progress
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('進捗情報が保存されました');
+        } else {
+          alert('進捗情報の保存に失敗しました');
+        }
+      })
+      .catch(error => console.error('Error saving progress:', error));
   };
 
   return (
@@ -76,7 +107,7 @@ const Checklist = ({ studentName }) => {
         <div className="grid grid-cols-5 gap-4 mt-4">
           {['english', 'math', 'science', 'social', 'japanese'].map(subject => (
             <div key={subject} className="text-center">
-              <div className="mb-2 bg-gray-200 p-2 rounded shadow">{subject === 'english' ? '英語' : subject === 'math' ? '数学' : subject === 'science' ? '理科' : subject === 'social' ? '社会' : '国語'}</div>
+              <div className="mb-2">{subject === 'english' ? '英語' : subject === 'math' ? '数学' : subject === 'science' ? '理科' : subject === 'social' ? '社会' : '国語'}</div>
               <button
                 onClick={() => toggleProgress(subject)}
                 className={`p-4 rounded shadow ${
@@ -89,74 +120,61 @@ const Checklist = ({ studentName }) => {
           ))}
         </div>
       )}
-      <div className="mt-4">
-        <button
-          onClick={handleSave}
-          className="p-2 bg-blue-500 text-white rounded shadow"
-        >
-          保存
-        </button>
-      </div>
-      <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+      {selectedWeek && (
+        <div className="mt-4">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded shadow"
           >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </Transition.Child>
+            保存
+          </button>
+        </div>
+      )}
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+        
+          <div className="min-h-screen px-4 text-center">
+           
+            
+          
+
+            <span className="inline-block h-screen align-middle" aria-hidden="true">
+              &#8203;
+            </span>
+            
+              <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+               
+                  進捗情報の保存
+             
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    進捗情報を保存しますか？
+                  </p>
+                </div>
+
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-500 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+                    onClick={() => {
+                      handleSave();
+                      setIsModalOpen(false);
+                    }}
                   >
-                    進捗の保存
-                  </Dialog.Title>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      進捗を保存しますか？
-                    </p>
-                  </div>
-
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                      onClick={confirmSave}
-                    >
-                      保存
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-4 inline-flex justify-center rounded-md border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                      onClick={() => setIsModalOpen(false)}
-                    >
-                      キャンセル
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
+                    保存
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex justify-center px-4 py-2 ml-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-500"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+         
           </div>
-        </Dialog>
-      </Transition>
+     
+   
     </div>
   );
 };

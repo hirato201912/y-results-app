@@ -9,6 +9,8 @@ $definedApiKey = '0401_predefined_api_key';
 
 $apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
 $studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
+$testId = isset($_GET['testId']) ? $_GET['testId'] : '';
+$week = isset($_GET['week']) ? $_GET['week'] : '';
 
 // APIキーの検証
 if ($apiKey !== $definedApiKey) {
@@ -23,36 +25,33 @@ if ($conn->connect_error) {
     die(json_encode(array("error" => $conn->connect_error)));
 }
 
-// SQL クエリ実行（テスト情報を取得）
-$sql = "
-SELECT 
-    t.test_id, 
-    t.test_name, 
-    t.test_date
-FROM 
-    tests t
-JOIN 
-    west_student s ON t.school_id = s.school_id
-WHERE 
-    s.student = ?
-";
-$stmt = $conn->prepare($sql);
+// 生徒IDの取得
+$stmt = $conn->prepare("SELECT west_student_id FROM west_student WHERE student = ?");
 $stmt->bind_param("s", $studentName);
 $stmt->execute();
 $result = $stmt->get_result();
+$student = $result->fetch_assoc();
+$studentId = $student['west_student_id'];
 
-// 結果を配列に格納
-$tests = array();
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        array_push($tests, $row);
-    }
-}
+// SQL クエリ実行（進捗情報を取得）
+$sql = "
+SELECT 
+    english, math, science, social, japanese
+FROM 
+    west_progress
+WHERE 
+    student_id = ? AND test_id = ? AND week = ?
+";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iis", $studentId, $testId, $week);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$progress = $result->fetch_assoc();
 
 // JSON 形式で出力
-echo json_encode(array("tests" => $tests));
+echo json_encode(array("progress" => $progress));
 
-// 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>

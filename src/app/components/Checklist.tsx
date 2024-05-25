@@ -24,7 +24,6 @@ const Checklist = ({ studentName }) => {
       .catch(error => console.error('Error fetching tests:', error));
   }, [studentName]);
 
-
   useEffect(() => {
     if (selectedTest && selectedWeek) {
       const apiKey = '0401_predefined_api_key';
@@ -32,15 +31,43 @@ const Checklist = ({ studentName }) => {
         .then(response => response.json())
         .then(data => {
           if (data.progress) {
-            setProgress(data.progress);
+            setProgress({
+              english: data.progress.english || '未',
+              math: data.progress.math || '未',
+              science: data.progress.science || '未',
+              social: data.progress.social || '未',
+              japanese: data.progress.japanese || '未'
+            });
+          } else {
+            setProgress({
+              english: '未',
+              math: '未',
+              science: '未',
+              social: '未',
+              japanese: '未'
+            });
           }
         })
-        .catch(error => console.error('Error fetching progress:', error));
+        .catch(error => {
+          console.error('Error fetching progress:', error);
+          setProgress({
+            english: '未',
+            math: '未',
+            science: '未',
+            social: '未',
+            japanese: '未'
+          });
+        });
+    } else {
+      setProgress({
+        english: '未',
+        math: '未',
+        science: '未',
+        social: '未',
+        japanese: '未'
+      });
     }
   }, [selectedTest, selectedWeek, studentName]);
-
-
-
 
   const toggleProgress = (subject) => {
     setProgress((prevProgress) => ({
@@ -167,6 +194,14 @@ const Checklist = ({ studentName }) => {
 };
 
 export default Checklist;
+
+
+
+
+
+
+
+
 
 
 

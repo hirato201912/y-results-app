@@ -7,10 +7,15 @@ const ProgressTable = ({ studentName }) => {
   useEffect(() => {
     const apiKey = '0401_predefined_api_key';
     fetch(`http://mikawayatsuhashi.sakura.ne.jp/west_fetch_all_progress.php?apiKey=${apiKey}&studentName=${studentName}`)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => {
+        console.log('Fetched progress data:', data); // デバッグ用ログ
         setProgressData(data.progress);
-        
       })
       .catch(error => console.error('Error fetching progress data:', error));
   }, [studentName]);
@@ -51,5 +56,6 @@ const ProgressTable = ({ studentName }) => {
 };
 
 export default ProgressTable;
+
 
 

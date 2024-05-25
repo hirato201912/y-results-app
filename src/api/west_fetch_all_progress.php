@@ -4,12 +4,11 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header('Content-Type: application/json');
 
+// 事前に定義されたAPIキー
 $definedApiKey = '0401_predefined_api_key';
 
 $apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
 $studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
-$testId = isset($_GET['testId']) ? $_GET['testId'] : '';
-$week = isset($_GET['week']) ? $_GET['week'] : '';
 
 // APIキーの検証
 if ($apiKey !== $definedApiKey) {
@@ -27,34 +26,52 @@ if ($conn->connect_error) {
 // SQL クエリ実行（進捗情報を取得）
 $sql = "
 SELECT 
-    english, math, science, social, japanese
+    t.test_name,
+    p.week, 
+    p.english, 
+    p.math, 
+    p.science, 
+    p.social, 
+    p.japanese
 FROM 
-    west_progress
+    west_progress p
+JOIN 
+    tests t ON p.test_id = t.test_id
 WHERE 
-    student_id = (SELECT west_student_id FROM west_student WHERE student = ?) 
-    AND test_id = ? 
-    AND week = ?
-ORDER BY progress_id DESC
-LIMIT 1
+    p.progress_id IN (
+        SELECT MAX(progress_id)
+        FROM west_progress
+        WHERE student_id = (SELECT west_student_id FROM west_student WHERE student = ?)
+        GROUP BY test_id, week
+    )
+ORDER BY 
+    t.test_name, 
+    CASE 
+        WHEN p.week = '3週間前' THEN 1
+        WHEN p.week = '2週間前' THEN 2
+        WHEN p.week = '1週間前' THEN 3
+        ELSE 4
+    END;
 ";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $studentName, $testId, $week);
+$stmt->bind_param("s", $studentName);
 $stmt->execute();
 $result = $stmt->get_result();
 
 // 結果を配列に格納
 $progress = array();
-if ($row = $result->fetch_assoc()) {
-    $progress = $row;
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        array_push($progress, $row);
+    }
 }
 
 // JSON 形式で出力
 echo json_encode(array("progress" => $progress));
 
+// 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>
-
-
 

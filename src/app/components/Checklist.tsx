@@ -56,7 +56,7 @@ const Checklist = () => {
     }
   }, [searchParams]);
 
-  const toggleProgress = (subject) => {
+  const toggleProgress = (subject: 'english' | 'math' | 'science' | 'social' | 'japanese') => {
     setProgress((prevProgress) => ({
       ...prevProgress,
       [subject]: prevProgress[subject] === '未' ? '済' : '未'
@@ -122,7 +122,7 @@ const Checklist = () => {
               {subject === 'japanese' && '国語'}
             </div>
             <button
-              onClick={() => toggleProgress(subject)}
+              onClick={() => toggleProgress(subject as 'english' | 'math' | 'science' | 'social' | 'japanese')}
               className={`p-4 rounded shadow ${
                 progress[subject] === '済' ? 'bg-green-500' : 'bg-red-500'
               } text-white`}
@@ -165,6 +165,7 @@ const Checklist = () => {
 };
 
 export default Checklist;
+
 
 
 

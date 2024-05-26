@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const Checklist = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [progress, setProgress] = useState({
+  const [progress, setProgress] = useState<{
+    [key: string]: string;
+  }>({
     english: '未',
     math: '未',
     science: '未',
@@ -165,6 +167,7 @@ const Checklist = () => {
 };
 
 export default Checklist;
+
 
 
 

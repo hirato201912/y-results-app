@@ -11,7 +11,7 @@ interface User {
   // 他のプロパティがあればここに追加
 }
 
-const DashboardPage: React.FC = () => {
+const DashboardContentWithParams: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -73,23 +73,31 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
+    <div className="container mx-auto p-4">
+      <CardComponent>
+        <DashboardContent studentName={studentName} handleRedirect={handleRedirect} />
+      </CardComponent>
+      <CardComponent>
+        <Checklist studentName={studentName} testName={testName} week={week} />
+      </CardComponent>
+      <CardComponent>
+        <ProgressTable studentName={studentName} />
+      </CardComponent>
+    </div>
+  );
+};
+
+const DashboardPage: React.FC = () => {
+  return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="container mx-auto p-4">
-        <CardComponent>
-          <DashboardContent studentName={studentName} handleRedirect={handleRedirect} />
-        </CardComponent>
-        <CardComponent>
-          <Checklist studentName={studentName} testName={testName} week={week} />
-        </CardComponent>
-        <CardComponent>
-          <ProgressTable studentName={studentName} />
-        </CardComponent>
-      </div>
+      <DashboardContentWithParams />
     </Suspense>
   );
 };
 
 export default DashboardPage;
+
+
 
 
 

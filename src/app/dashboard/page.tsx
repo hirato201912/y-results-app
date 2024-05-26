@@ -28,10 +28,6 @@ const DashboardContentWithParams: React.FC = () => {
     if (name && userParam && test && wk) {
       try {
         const userSession = JSON.parse(decodeURIComponent(userParam));
-        sessionStorage.setItem('studentName', name);
-        sessionStorage.setItem('userSession', JSON.stringify(userSession));
-        sessionStorage.setItem('testName', test);
-        sessionStorage.setItem('week', wk);
         setStudentName(name);
         setUser(userSession);
         setTestName(test);
@@ -41,25 +37,7 @@ const DashboardContentWithParams: React.FC = () => {
         router.push('/login');
       }
     } else {
-      const storedStudentName = sessionStorage.getItem('studentName');
-      const storedUser = sessionStorage.getItem('userSession');
-      const storedTestName = sessionStorage.getItem('testName');
-      const storedWeek = sessionStorage.getItem('week');
-
-      if (storedStudentName && storedUser && storedTestName && storedWeek) {
-        setStudentName(storedStudentName);
-        setTestName(storedTestName);
-        setWeek(storedWeek);
-        try {
-          const userSession = JSON.parse(storedUser);
-          setUser(userSession);
-        } catch (error) {
-          console.error('Failed to parse stored user session:', error);
-          router.push('/login');
-        }
-      } else {
-        router.push('/login');
-      }
+      router.push('/login');
     }
   }, [router, searchParams]);
 
@@ -96,6 +74,7 @@ const DashboardPage: React.FC = () => {
 };
 
 export default DashboardPage;
+
 
 
 

@@ -107,10 +107,9 @@ const Checklist = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h2 className="text-2xl mb-4">進捗管理</h2>
       <div className="mb-4 p-4 bg-gray-100 rounded shadow">
-        <h3 className="text-xl font-semibold">{searchParams.get('test_name') || 'テスト名がありません'}</h3>
-        <p className="text-lg">{searchParams.get('week') || '週の情報がありません'}</p>
+        <h3 className="text-xl font-semibold text-green-600">{searchParams.get('test_name') || 'テスト名がありません'}</h3>
+        <p className="text-lg font-bold text-red-600">● {searchParams.get('week') || '週の情報がありません'} ●</p>
       </div>
       <div className="grid grid-cols-5 gap-4 mt-4">
         {['english', 'math', 'science', 'social', 'japanese'].map(subject => (
@@ -133,12 +132,14 @@ const Checklist = () => {
           </div>
         ))}
       </div>
-      <button
-        onClick={handleSave}
-        className="mt-4 p-2 bg-blue-500 text-white rounded shadow"
-      >
-        進捗を保存
-      </button>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={handleSave}
+          className="mt-8 p-2 bg-blue-500 text-white rounded shadow"
+        >
+          進捗を保存
+        </button>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -164,6 +165,7 @@ const Checklist = () => {
 };
 
 export default Checklist;
+
 
 
 

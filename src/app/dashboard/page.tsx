@@ -3,45 +3,39 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Checklist from './../components/Checklist';
 import ProgressTable from './../components/ProgressTable';
+import DashboardContent from './../components/DashboardContent';
+import CardComponent from './../components/CardComponent';
 
 interface User {
   name: string;
   // 他のプロパティがあればここに追加
 }
 
-const DashboardContent = ({ studentName, user }) => {
-  const handleRedirect = () => {
-    const phpUrl = `http://mikawayatsuhashi.sakura.ne.jp/west.shows.php?name=${encodeURIComponent(studentName)}&session=${encodeURIComponent(JSON.stringify(user))}`;
-    window.location.href = phpUrl;
-  };
-
-  return (
-    <div>
-      <h1>Welcome, {user.name}</h1>
-      <h2>Student: {studentName}</h2>
-      <button onClick={handleRedirect}>PHPページへ戻る</button>
-      {/* 他のコンテンツ */}
-    </div>
-  );
-};
-
 const DashboardPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [studentName, setStudentName] = useState('');
+  const [testName, setTestName] = useState('');
+  const [week, setWeek] = useState('');
 
   useEffect(() => {
     const name = searchParams.get('name');
     const userParam = searchParams.get('user');
+    const test = searchParams.get('test_name');
+    const wk = searchParams.get('week');
 
-    if (name && userParam) {
+    if (name && userParam && test && wk) {
       try {
         const userSession = JSON.parse(decodeURIComponent(userParam));
         sessionStorage.setItem('studentName', name);
         sessionStorage.setItem('userSession', JSON.stringify(userSession));
+        sessionStorage.setItem('testName', test);
+        sessionStorage.setItem('week', wk);
         setStudentName(name);
         setUser(userSession);
+        setTestName(test);
+        setWeek(wk);
       } catch (error) {
         console.error('Failed to parse user session:', error);
         router.push('/login');
@@ -49,9 +43,13 @@ const DashboardPage = () => {
     } else {
       const storedStudentName = sessionStorage.getItem('studentName');
       const storedUser = sessionStorage.getItem('userSession');
+      const storedTestName = sessionStorage.getItem('testName');
+      const storedWeek = sessionStorage.getItem('week');
 
-      if (storedStudentName && storedUser) {
+      if (storedStudentName && storedUser && storedTestName && storedWeek) {
         setStudentName(storedStudentName);
+        setTestName(storedTestName);
+        setWeek(storedWeek);
         try {
           const userSession = JSON.parse(storedUser);
           setUser(userSession);
@@ -69,18 +67,30 @@ const DashboardPage = () => {
     return <div>Loading...</div>;
   }
 
+  const handleRedirect = () => {
+    const phpUrl = `http://mikawayatsuhashi.sakura.ne.jp/west.shows.php?name=${encodeURIComponent(studentName)}&session=${encodeURIComponent(JSON.stringify(user))}`;
+    window.location.href = phpUrl;
+  };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="container mx-auto p-4">
-        <DashboardContent studentName={studentName} user={user} />
-        <Checklist studentName={studentName} />
-        <ProgressTable studentName={studentName} />
+        <CardComponent>
+          <DashboardContent studentName={studentName} handleRedirect={handleRedirect} />
+        </CardComponent>
+        <CardComponent>
+          <Checklist studentName={studentName} testName={testName} week={week} />
+        </CardComponent>
+        <CardComponent>
+          <ProgressTable studentName={studentName} />
+        </CardComponent>
       </div>
     </Suspense>
   );
 };
 
 export default DashboardPage;
+
 
 
 

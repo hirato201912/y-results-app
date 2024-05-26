@@ -2,7 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const Checklist = () => {
+interface ChecklistProps {
+  studentName: string;
+  testName: string;
+  week: string;
+}
+
+const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [progress, setProgress] = useState<{
@@ -18,18 +24,12 @@ const Checklist = () => {
 
   useEffect(() => {
     const apiKey = '0401_predefined_api_key';
-    const testName = searchParams.get('test_name');
-    const week = searchParams.get('week');
-    const studentName = searchParams.get('name');
-    const userSession = searchParams.get('user');
 
     console.log('Test Name:', testName);
     console.log('Week:', week);
     console.log('Student Name:', studentName);
-    console.log('User Session:', userSession);
 
-    if (testName && week && studentName && userSession) {
-      // Fetch progress data for the given test and week
+    if (testName && week && studentName) {
       fetch(`http://mikawayatsuhashi.sakura.ne.jp/west_fetch_progress.php?apiKey=${apiKey}&studentName=${encodeURIComponent(studentName)}&testName=${encodeURIComponent(testName)}&week=${encodeURIComponent(week)}`)
         .then(response => response.json())
         .then(data => {
@@ -54,9 +54,9 @@ const Checklist = () => {
         })
         .catch(error => console.error('Error fetching progress:', error));
     } else {
-      console.error('Test Name, Week, Student Name, and User Session are required to fetch progress');
+      console.error('Test Name, Week, and Student Name are required to fetch progress');
     }
-  }, [searchParams]);
+  }, [testName, week, studentName]);
 
   const toggleProgress = (subject: 'english' | 'math' | 'science' | 'social' | 'japanese') => {
     setProgress((prevProgress) => ({
@@ -68,12 +68,9 @@ const Checklist = () => {
   const handleSave = () => {
     setIsModalOpen(true);
   };
+
   const confirmSave = () => {
     const apiKey = '0401_predefined_api_key';
-    const testName = searchParams.get('test_name');
-    const week = searchParams.get('week');
-    const studentName = searchParams.get('name');
-    const userSession = searchParams.get('user');
 
     console.log('Saving data:', {
       studentName,
@@ -82,7 +79,6 @@ const Checklist = () => {
       progress
     });
 
-    // Save progress to the server
     fetch(`http://mikawayatsuhashi.sakura.ne.jp/west_save_progress.php?apiKey=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -106,12 +102,11 @@ const Checklist = () => {
       });
   };
 
-
   return (
     <div className="container mx-auto p-4">
       <div className="mb-4 p-4 bg-gray-100 rounded shadow">
-        <h3 className="text-xl font-semibold text-green-600">{searchParams.get('test_name') || 'テスト名がありません'}</h3>
-        <p className="text-lg font-bold text-red-600">● {searchParams.get('week') || '週の情報がありません'} ●</p>
+        <h3 className="text-xl font-semibold text-green-600">{testName || 'テスト名がありません'}</h3>
+        <p className="text-lg font-bold text-red-600">● {week || '週の情報がありません'} ●</p>
       </div>
       <div className="grid grid-cols-5 gap-4 mt-4">
         {['english', 'math', 'science', 'social', 'japanese'].map(subject => (
@@ -167,6 +162,8 @@ const Checklist = () => {
 };
 
 export default Checklist;
+
+
 
 
 

@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Checklist from './../components/Checklist';
 import ProgressTable from './../components/ProgressTable';
@@ -11,13 +11,13 @@ interface User {
   // 他のプロパティがあればここに追加
 }
 
-const DashboardPage = () => {
+const DashboardPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
-  const [studentName, setStudentName] = useState('');
-  const [testName, setTestName] = useState('');
-  const [week, setWeek] = useState('');
+  const [studentName, setStudentName] = useState<string>('');
+  const [testName, setTestName] = useState<string>('');
+  const [week, setWeek] = useState<string>('');
 
   useEffect(() => {
     const name = searchParams.get('name');
@@ -90,6 +90,7 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
 
 
 

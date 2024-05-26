@@ -1,6 +1,5 @@
 "use client"
 import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 interface ChecklistProps {
   studentName: string;
@@ -9,8 +8,6 @@ interface ChecklistProps {
 }
 
 const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) => {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const [progress, setProgress] = useState<{
     [key: string]: string;
   }>({
@@ -162,6 +159,8 @@ const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) =>
 };
 
 export default Checklist;
+
+
 
 
 

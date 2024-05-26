@@ -1,7 +1,13 @@
 "use client"
-import React from 'react';
+// src/app/components/CardComponent.tsx
 
-const CardComponent = ({ children }) => {
+import React, { ReactNode } from 'react';
+
+interface CardComponentProps {
+  children: ReactNode;
+}
+
+const CardComponent = ({ children }: CardComponentProps) => {
   return (
     <div className="bg-white shadow-md rounded-lg p-6 m-4">
       {children}
@@ -10,3 +16,4 @@ const CardComponent = ({ children }) => {
 };
 
 export default CardComponent;
+

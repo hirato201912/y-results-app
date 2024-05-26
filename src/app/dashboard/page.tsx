@@ -68,7 +68,7 @@ const DashboardContentWithParams: React.FC = () => {
   }
 
   const handleRedirect = () => {
-    const phpUrl = `http://mikawayatsuhashi.sakura.ne.jp/west.shows.php?name=${encodeURIComponent(studentName)}&session=${encodeURIComponent(JSON.stringify(user))}`;
+    const phpUrl = `https://mikawayatsuhashi.sakura.ne.jp/west.shows.php?name=${encodeURIComponent(studentName)}&session=${encodeURIComponent(JSON.stringify(user))}`;
     window.location.href = phpUrl;
   };
 

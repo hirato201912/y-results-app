@@ -80,9 +80,9 @@ const DashboardContentWithParams: React.FC = () => {
       <CardComponent>
         <Checklist studentName={studentName} testName={testName} week={week} />
       </CardComponent>
-      <CardComponent>
+      {/* <CardComponent>
         <ProgressTable studentName={studentName} />
-      </CardComponent>
+      </CardComponent> */}
     </div>
   );
 };

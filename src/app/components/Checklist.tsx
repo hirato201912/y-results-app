@@ -103,8 +103,11 @@ const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) =>
     <div className="container mx-auto p-4">
       <div className="mb-4 p-4 bg-gray-100 rounded shadow">
         <h3 className="text-xl  text-green-600">{testName || 'テスト名がありません'}</h3>
-        <p className="text-lg  text-red-600">● {week || '週の情報がありません'} ●</p>
+        <p className="text-lg  text-red-600"> {week || '週の情報がありません'} </p>
       </div>
+      <p className="mb-4 text-center text-gray-700">
+        生徒の進捗を確認し、ボタンをタップして、情報を更新して保存してください。
+      </p>
       <div className="grid grid-cols-5 gap-4 mt-4">
         {['english', 'math', 'science', 'social', 'japanese'].map(subject => (
           <div key={subject} className="text-center">
@@ -131,7 +134,7 @@ const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) =>
           onClick={handleSave}
           className="mt-8 p-2 bg-blue-500 text-white rounded shadow"
         >
-          変更を保存する
+          更新して保存する
         </button>
       </div>
 

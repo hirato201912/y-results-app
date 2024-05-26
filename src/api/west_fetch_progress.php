@@ -8,7 +8,7 @@ $definedApiKey = '0401_predefined_api_key';
 
 $apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
 $studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
-$testId = isset($_GET['testId']) ? $_GET['testId'] : '';
+$testName = isset($_GET['testName']) ? $_GET['testName'] : ''; // 変数名を修正
 $week = isset($_GET['week']) ? $_GET['week'] : '';
 
 // APIキーの検証
@@ -32,14 +32,14 @@ FROM
     west_progress
 WHERE 
     student_id = (SELECT west_student_id FROM west_student WHERE student = ?) 
-    AND test_id = ? 
+    AND test_id = (SELECT test_id FROM tests WHERE test_name = ?) 
     AND week = ?
 ORDER BY progress_id DESC
 LIMIT 1
 ";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $studentName, $testId, $week);
+$stmt->bind_param("sss", $studentName, $testName, $week); // 変数名を修正
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -55,6 +55,7 @@ echo json_encode(array("progress" => $progress));
 $stmt->close();
 $conn->close();
 ?>
+
 
 
 

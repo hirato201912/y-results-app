@@ -25,14 +25,14 @@ if ($conn->connect_error) {
 // 進捗データを保存
 $sql = "
 INSERT INTO west_progress (student_id, test_id, week, english, math, science, social, japanese) 
-VALUES ((SELECT west_student_id FROM west_student WHERE student = ?), ?, ?, ?, ?, ?, ?, ?)
+VALUES ((SELECT west_student_id FROM west_student WHERE student = ?), (SELECT test_id FROM tests WHERE test_name = ?), ?, ?, ?, ?, ?, ?)
 ";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param(
     "ssssssss",
     $data['studentName'],
-    $data['testId'],
+    $data['testName'], // 修正
     $data['week'],
     $data['progress']['english'],
     $data['progress']['math'],
@@ -40,11 +40,15 @@ $stmt->bind_param(
     $data['progress']['social'],
     $data['progress']['japanese']
 );
-$stmt->execute();
 
-// 結果をJSON形式で出力
-echo json_encode(array("status" => "success"));
+if ($stmt->execute()) {
+    echo json_encode(array("status" => "success"));
+} else {
+    echo json_encode(array("status" => "error", "error" => $stmt->error));
+}
 
+// 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>
+

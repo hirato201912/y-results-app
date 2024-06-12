@@ -1,10 +1,10 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FaChartBar, FaChartLine, FaHistory, FaChartArea, FaArrowLeft } from 'react-icons/fa';
-import RechartsBarChart from './../components/RechartsBarChart';
-import RadarChartComponent from './../components/RadarChartComponent';
-import LineChartComponent from './../components/LineChartComponent';
+import RechartsBarChart from '../components/RechartsBarChart';
+import RadarChartComponent from '../components/RadarChartComponent';
+import LineChartComponent from '../components/LineChartComponent';
 import classNames from 'classnames';
 
 interface User {
@@ -25,7 +25,6 @@ interface Score {
 
 const DashboardContentWithParams: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [studentName, setStudentName] = useState<string>('');
   const [scores, setScores] = useState<Score[]>([]);
@@ -34,16 +33,16 @@ const DashboardContentWithParams: React.FC = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['合計点']);
 
   useEffect(() => {
-    const name = searchParams.get('name');
-    const userParam = searchParams.get('user');
-    const apiKey = searchParams.get('api_key');
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get('name');
+    const userParam = params.get('user');
+    const apiKey = params.get('api_key');
 
     if (!name || !userParam || !apiKey) {
       router.push('/login');
       return;
     }
 
-    // セッションに保存されたAPIキーを検証するためのAPIエンドポイントにリクエスト
     fetch(`/api/verify-api-key?api_key=${apiKey}`)
       .then(response => response.json())
       .then(data => {
@@ -60,7 +59,7 @@ const DashboardContentWithParams: React.FC = () => {
         console.error('API key verification failed:', error);
         router.push('/login');
       });
-  }, [router, searchParams]);
+  }, [router]);
 
   const fetchScores = async (name: string) => {
     try {
@@ -104,18 +103,18 @@ const DashboardContentWithParams: React.FC = () => {
     if (previousScore === undefined) return '';
     if (isRank) {
       if (currentScore < previousScore) {
-        return 'text-green-500 font-bold'; // 順位が上がっている（値が低くなっている）場合、緑色と太字で表示
+        return 'text-green-500 font-bold';
       } else if (currentScore > previousScore) {
-        return 'text-red-500 font-bold'; // 順位が下がっている（値が高くなっている）場合、赤色と太字で表示
+        return 'text-red-500 font-bold';
       }
     } else {
       if (currentScore > previousScore) {
-        return 'text-green-500 font-bold'; // 成績が上がっている場合、緑色と太字で表示
+        return 'text-green-500 font-bold';
       } else if (currentScore < previousScore) {
-        return 'text-red-500 font-bold'; // 成績が下がっている場合、赤色と太字で表示
+        return 'text-red-500 font-bold';
       }
     }
-    return ''; // 変化がない場合、通常の表示
+    return '';
   };
 
   return (

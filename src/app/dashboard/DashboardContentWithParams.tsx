@@ -126,6 +126,9 @@ const DashboardContentWithParams: React.FC = () => {
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartBar className="mr-2" />点数グラフ</h2>
+        <p className="mb-4 text-gray-700">
+          初期表示では「合計点」が表示されています。科目をチェックするとその科目のデータが表示され、合計点のチェックを外すと科目だけのデータで比較ができます。
+        </p>
         <div className="flex justify-center mb-4">
           {['合計点', '国語', '社会', '数学', '理科', '英語'].map(subject => (
             <label key={subject} className="mr-4">
@@ -210,4 +213,3 @@ const DashboardContentWithParams: React.FC = () => {
 };
 
 export default DashboardContentWithParams;
-

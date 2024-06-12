@@ -1,12 +1,13 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import RechartsBarChart from './../components/RechartsBarChart';  // チャートコンポーネントをインポート
-import RadarChartComponent from './../components/RadarChartComponent';  // レーダーチャートコンポーネントをインポート
+import RechartsBarChart from './../components/RechartsBarChart';
+import RadarChartComponent from './../components/RadarChartComponent';
+import LineChartComponent from './../components/LineChartComponent';
+import classNames from 'classnames';
 
 interface User {
   name: string;
-  // 他のプロパティがあればここに追加
 }
 
 interface Score {
@@ -83,14 +84,34 @@ const DashboardContentWithParams: React.FC = () => {
     return <div className="text-center py-10 text-red-500">{error}</div>;
   }
 
+  const getScoreChangeClass = (currentScore: number, previousScore: number, isRank: boolean = false) => {
+    if (isRank) {
+      if (currentScore < previousScore) {
+        return 'text-green-500 font-bold'; // 順位が上がっている（値が低くなっている）場合、緑色と太字で表示
+      } else if (currentScore > previousScore) {
+        return 'text-red-500 font-bold'; // 順位が下がっている（値が高くなっている）場合、赤色と太字で表示
+      }
+    } else {
+      if (currentScore > previousScore) {
+        return 'text-green-500 font-bold'; // 成績が上がっている場合、緑色と太字で表示
+      } else if (currentScore < previousScore) {
+        return 'text-red-500 font-bold'; // 成績が下がっている場合、赤色と太字で表示
+      }
+    }
+    return ''; // 変化がない場合、通常の表示
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">生徒の分析ページ</h1>
+
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4">{studentName} の成績</h2>
-        <RadarChartComponent data={scores} />  {/* レーダーチャートの追加 */}
+        <RadarChartComponent data={scores} />
       </div>
-      <div className="bg-white shadow-md rounded-lg p-4">
+
+      <div className="bg-white shadow-md rounded-lg p-4 mb-8">
+        <h2 className="text-xl font-semibold mb-4">点数グラフ</h2>
         <div className="flex justify-center mb-4">
           {['合計点', '国語', '社会', '数学', '理科', '英語'].map(subject => (
             <label key={subject} className="mr-4">
@@ -106,36 +127,66 @@ const DashboardContentWithParams: React.FC = () => {
         </div>
         <RechartsBarChart data={scores} selectedSubjects={selectedSubjects} />
       </div>
+
+      <div className="bg-white shadow-md rounded-lg p-4 mb-8">
+        <h2 className="text-xl font-semibold mb-4">順位グラフ</h2>
+        <LineChartComponent data={scores} />
+      </div>
+
       {scores.length > 0 ? (
         <div className="bg-white shadow-md rounded-lg p-4 mt-8">
-          <table className="min-w-full bg-white mt-4">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">テスト名</th>
-                <th className="py-2 px-4 border-b">国語</th>
-                <th className="py-2 px-4 border-b">社会</th>
-                <th className="py-2 px-4 border-b">数学</th>
-                <th className="py-2 px-4 border-b">理科</th>
-                <th className="py-2 px-4 border-b">英語</th>
-                <th className="py-2 px-4 border-b">合計</th>
-                <th className="py-2 px-4 border-b">順位</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scores.map(score => (
-                <tr key={score.id}>
-                  <td className="py-2 px-4 border-b">{score.test_name}</td>
-                  <td className="py-2 px-4 border-b">{score.score1}点</td>
-                  <td className="py-2 px-4 border-b">{score.score2}点</td>
-                  <td className="py-2 px-4 border-b">{score.score3}点</td>
-                  <td className="py-2 px-4 border-b">{score.score4}点</td>
-                  <td className="py-2 px-4 border-b">{score.score5}点</td>
-                  <td className="py-2 px-4 border-b">{score.score7}点</td>
-                  <td className="py-2 px-4 border-b">{score.score6}位</td>
+          <h2 className="text-xl font-semibold mb-4">前回との比較</h2>
+          <p className="mb-4">
+            <span className="text-green-500 font-bold">緑色</span>: 成績が上がっています。<br />
+            <span className="text-red-500 font-bold">赤色</span>: 成績が下がっています。
+          </p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-300">
+              <thead>
+                <tr>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">テスト名</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">国語</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">社会</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">数学</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">理科</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">英語</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">合計</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">順位</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {scores.map((score, index) => {
+                  const previousScore = index > 0 ? scores[index - 1] : null;
+                  return (
+                    <tr key={score.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="py-2 px-4 border-b border-gray-300">{score.test_name}</td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score1, previousScore?.score1))}>
+                        {score.score1}
+                      </td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score2, previousScore?.score2))}>
+                        {score.score2}
+                      </td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score3, previousScore?.score3))}>
+                        {score.score3}
+                      </td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score4, previousScore?.score4))}>
+                        {score.score4}
+                      </td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score5, previousScore?.score5))}>
+                        {score.score5}
+                      </td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score7, previousScore?.score7))}>
+                        {score.score7}
+                      </td>
+                      <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score6, previousScore?.score6, true))}>
+                        {score.score6}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div>成績データがありません。</div>
@@ -145,3 +196,4 @@ const DashboardContentWithParams: React.FC = () => {
 };
 
 export default DashboardContentWithParams;
+

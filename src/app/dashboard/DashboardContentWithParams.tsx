@@ -74,7 +74,8 @@ const DashboardContentWithParams: React.FC = () => {
   };
 
   const handleRedirect = () => {
-    router.back();
+    const phpUrl = `https://mikawayatsuhashi.sakura.ne.jp/west.shows.php?name=${encodeURIComponent(studentName)}&session=${encodeURIComponent(JSON.stringify(user))}`;
+    window.location.href = phpUrl;
   };
 
   if (!user) {
@@ -209,3 +210,4 @@ const DashboardContentWithParams: React.FC = () => {
 };
 
 export default DashboardContentWithParams;
+

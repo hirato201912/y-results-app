@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaChartBar, FaChartLine, FaBalanceScale } from 'react-icons/fa';
+import { FaChartBar, FaChartLine, FaHistory, FaChartArea, FaArrowLeft } from 'react-icons/fa';
 import RechartsBarChart from './../components/RechartsBarChart';
 import RadarChartComponent from './../components/RadarChartComponent';
 import LineChartComponent from './../components/LineChartComponent';
@@ -39,7 +39,7 @@ const DashboardContentWithParams: React.FC = () => {
 
     if (name && userParam) {
       try {
-        const userSession = JSON.parse(decodeURIComponent(userParam));
+        const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
         setStudentName(name);
         setUser(userSession);
         fetchScores(name);
@@ -58,7 +58,7 @@ const DashboardContentWithParams: React.FC = () => {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      const data = await response.json();
+      const data: Score[] = await response.json();
       setScores(data);
     } catch (error) {
       setError('データの読み込みに失敗しました。');
@@ -73,6 +73,10 @@ const DashboardContentWithParams: React.FC = () => {
     );
   };
 
+  const handleRedirect = () => {
+    router.back();
+  };
+
   if (!user) {
     return <div className="text-center py-10">Loading...</div>;
   }
@@ -85,7 +89,8 @@ const DashboardContentWithParams: React.FC = () => {
     return <div className="text-center py-10 text-red-500">{error}</div>;
   }
 
-  const getScoreChangeClass = (currentScore: number, previousScore: number, isRank: boolean = false) => {
+  const getScoreChangeClass = (currentScore: number, previousScore: number | undefined, isRank: boolean = false) => {
+    if (previousScore === undefined) return '';
     if (isRank) {
       if (currentScore < previousScore) {
         return 'text-green-500 font-bold'; // 順位が上がっている（値が低くなっている）場合、緑色と太字で表示
@@ -104,10 +109,17 @@ const DashboardContentWithParams: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{studentName} の成績分析</h1>
+      <div className="mb-4">
+        <button onClick={handleRedirect} className="flex items-center p-2 bg-blue-500 text-white rounded shadow hover:bg-blue-700">
+          <FaArrowLeft className="mr-2" /> 戻る
+        </button>
+      </div>
+      <h1 className="text-2xl font-bold mb-4">
+        <span className="text-3xl" style={{ color: '#4AC0B9' }}>{studentName}</span> の成績分析
+      </h1>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4 flex items-center"><FaBalanceScale className="mr-2" />前回との比較</h2>
+        <h2 className="text-xl font-semibold mb-4 flex items-center"><FaHistory className="mr-2" />前回との比較</h2>
         <RadarChartComponent data={scores} />
       </div>
 
@@ -136,7 +148,7 @@ const DashboardContentWithParams: React.FC = () => {
 
       {scores.length > 0 ? (
         <div className="bg-white shadow-md rounded-lg p-4 mt-8">
-          <h2 className="text-xl font-semibold mb-4">成績の推移</h2>
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartArea className="mr-2" />成績の推移</h2>
           <p className="mb-4">
             <span className="text-green-500 font-bold">緑色</span>: 成績が上がっています。<br />
             <span className="text-red-500 font-bold">赤色</span>: 成績が下がっています。
@@ -157,7 +169,7 @@ const DashboardContentWithParams: React.FC = () => {
               </thead>
               <tbody>
                 {scores.map((score, index) => {
-                  const previousScore = index > 0 ? scores[index - 1] : null;
+                  const previousScore = index > 0 ? scores[index - 1] : undefined;
                   return (
                     <tr key={score.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="py-2 px-4 border-b border-gray-300">{score.test_name}</td>

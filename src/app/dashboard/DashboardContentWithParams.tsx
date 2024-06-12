@@ -103,10 +103,10 @@ const DashboardContentWithParams: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">生徒の分析ページ</h1>
+      <h1 className="text-2xl font-bold mb-4">{studentName} の成績分析</h1>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4">{studentName} の成績</h2>
+        <h2 className="text-xl font-semibold mb-4">前回との比較</h2>
         <RadarChartComponent data={scores} />
       </div>
 
@@ -135,7 +135,7 @@ const DashboardContentWithParams: React.FC = () => {
 
       {scores.length > 0 ? (
         <div className="bg-white shadow-md rounded-lg p-4 mt-8">
-          <h2 className="text-xl font-semibold mb-4">前回との比較</h2>
+          <h2 className="text-xl font-semibold mb-4">成績の推移</h2>
           <p className="mb-4">
             <span className="text-green-500 font-bold">緑色</span>: 成績が上がっています。<br />
             <span className="text-red-500 font-bold">赤色</span>: 成績が下がっています。
@@ -196,4 +196,3 @@ const DashboardContentWithParams: React.FC = () => {
 };
 
 export default DashboardContentWithParams;
-

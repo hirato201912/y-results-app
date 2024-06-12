@@ -12,18 +12,18 @@ interface LineChartComponentProps {
 }
 
 const LineChartComponent: React.FC<LineChartComponentProps> = ({ data }) => {
-  // 順位は値が低いほど良いので、Y軸を反転させます
-  const score6Domain = [Math.max(...data.map(item => item.score6)), 1];
+  const minRank = Math.min(...data.map(d => d.score6)) - 1;
+  const maxRank = Math.max(...data.map(d => d.score6)) + 1;
 
   return (
     <ResponsiveContainer width="100%" height={400}>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="test_name" />
-        <YAxis domain={score6Domain} reversed />
+        <YAxis domain={[minRank, maxRank]} reversed />
+        <CartesianGrid strokeDasharray="3 3" />
         <Tooltip />
         <Legend />
-        <Line type="monotone" dataKey="score6" name="順位" stroke="#8884d8" />
+        <Line type="monotone" dataKey="score6" name="順位" stroke="#8884d8" strokeWidth={3} dot={{ r: 6 }} activeDot={{ r: 8 }} />
       </LineChart>
     </ResponsiveContainer>
   );

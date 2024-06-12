@@ -1,13 +1,10 @@
 // components/RechartsBarChart.tsx
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Line, CartesianGrid, ResponsiveContainer, ComposedChart } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts';
 
 interface Score {
   id: number;
   test_name: string;
-  result: string;
-  post_date: string;
-  student: string;
   score1: number;
   score2: number;
   score3: number;
@@ -19,25 +16,28 @@ interface Score {
 
 interface RechartsBarChartProps {
   data: Score[];
+  selectedSubjects: string[];
 }
 
-const RechartsBarChart: React.FC<RechartsBarChartProps> = ({ data }) => {
-  const score6Domain = [Math.max(...data.map(item => item.score6)), 1]; // 順位の範囲を反転
-
+const RechartsBarChart: React.FC<RechartsBarChartProps> = ({ data, selectedSubjects }) => {
   return (
     <ResponsiveContainer width="100%" height={400}>
-      <ComposedChart data={data}>
+      <BarChart data={data} barSize={20}>
         <XAxis dataKey="test_name" />
-        <YAxis yAxisId="left" orientation="left" domain={[100, 'dataMax']} />
-        <YAxis yAxisId="right" orientation="right" domain={score6Domain} reversed />
+        <YAxis />
         <Tooltip />
         <Legend />
         <CartesianGrid stroke="#f5f5f5" />
-        <Bar yAxisId="left" dataKey="score7" barSize={20} fill="#8884d8" />
-        <Line yAxisId="right" type="monotone" dataKey="score6" stroke="#ff7300" />
-      </ComposedChart>
+        {selectedSubjects.includes('国語') && <Bar dataKey="score1" name="国語" fill="#8884d8" />}
+        {selectedSubjects.includes('社会') && <Bar dataKey="score2" name="社会" fill="#82ca9d" />}
+        {selectedSubjects.includes('数学') && <Bar dataKey="score3" name="数学" fill="#ffc658" />}
+        {selectedSubjects.includes('理科') && <Bar dataKey="score4" name="理科" fill="#ff7300" />}
+        {selectedSubjects.includes('英語') && <Bar dataKey="score5" name="英語" fill="#8dd1e1" />}
+        {selectedSubjects.includes('合計点') && <Bar dataKey="score7" name="合計点" fill="#82ca9d" />}
+      </BarChart>
     </ResponsiveContainer>
   );
 };
 
 export default RechartsBarChart;
+

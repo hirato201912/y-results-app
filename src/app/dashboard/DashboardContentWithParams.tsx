@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RechartsBarChart from './../components/RechartsBarChart';  // チャートコンポーネントをインポート
+import RadarChartComponent from './../components/RadarChartComponent';  // レーダーチャートコンポーネントをインポート
 
 interface User {
   name: string;
@@ -11,9 +12,6 @@ interface User {
 interface Score {
   id: number;
   test_name: string;
-  result: string;
-  post_date: string;
-  student: string;
   score1: number;
   score2: number;
   score3: number;
@@ -31,6 +29,7 @@ const DashboardContentWithParams: React.FC = () => {
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['合計点']);
 
   useEffect(() => {
     const name = searchParams.get('name');
@@ -66,6 +65,12 @@ const DashboardContentWithParams: React.FC = () => {
     }
   };
 
+  const handleSubjectChange = (subject: string) => {
+    setSelectedSubjects(prev =>
+      prev.includes(subject) ? prev.filter(s => s !== subject) : [...prev, subject]
+    );
+  };
+
   if (!user) {
     return <div className="text-center py-10">Loading...</div>;
   }
@@ -81,10 +86,27 @@ const DashboardContentWithParams: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">生徒の分析ページ</h1>
-      <div className="bg-white shadow-md rounded-lg p-4">
+      <div className="bg-white shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4">{studentName} の成績</h2>
-        <RechartsBarChart data={scores} />
-        {scores.length > 0 ? (
+        <RadarChartComponent data={scores} />  {/* レーダーチャートの追加 */}
+      </div>
+      <div className="bg-white shadow-md rounded-lg p-4">
+        <div className="flex justify-center mb-4">
+          {['合計点', '国語', '社会', '数学', '理科', '英語'].map(subject => (
+            <label key={subject} className="mr-4">
+              <input
+                type="checkbox"
+                checked={selectedSubjects.includes(subject)}
+                onChange={() => handleSubjectChange(subject)}
+              />
+              {subject}
+            </label>
+          ))}
+        </div>
+        <RechartsBarChart data={scores} selectedSubjects={selectedSubjects} />
+      </div>
+      {scores.length > 0 ? (
+        <div className="bg-white shadow-md rounded-lg p-4 mt-8">
           <table className="min-w-full bg-white mt-4">
             <thead>
               <tr>
@@ -113,10 +135,10 @@ const DashboardContentWithParams: React.FC = () => {
               ))}
             </tbody>
           </table>
-        ) : (
-          <div>成績データがありません。</div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div>成績データがありません。</div>
+      )}
     </div>
   );
 };

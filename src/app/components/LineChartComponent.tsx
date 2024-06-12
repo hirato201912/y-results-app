@@ -32,7 +32,7 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({ data }) => {
     <div>
       {hasPlaceholderValues && (
         <p className="text-red-500 font-bold mb-2">
-          データが未入力のため、一部仮の数値を使用しています。
+          データが未入力のため、一部平均値を使用しています。
         </p>
       )}
       <ResponsiveContainer width="100%" height={400}>

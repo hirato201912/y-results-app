@@ -36,20 +36,30 @@ const DashboardContentWithParams: React.FC = () => {
   useEffect(() => {
     const name = searchParams.get('name');
     const userParam = searchParams.get('user');
+    const apiKey = searchParams.get('api_key');
 
-    if (name && userParam) {
-      try {
-        const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
-        setStudentName(name);
-        setUser(userSession);
-        fetchScores(name);
-      } catch (error) {
-        console.error('Failed to parse user session:', error);
-        router.push('/login');
-      }
-    } else {
+    if (!name || !userParam || !apiKey) {
       router.push('/login');
+      return;
     }
+
+    // セッションに保存されたAPIキーを検証するためのAPIエンドポイントにリクエスト
+    fetch(`/api/verify-api-key?api_key=${apiKey}`)
+      .then(response => response.json())
+      .then(data => {
+        if (!data.valid) {
+          router.push('/login');
+        } else {
+          const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
+          setStudentName(name);
+          setUser(userSession);
+          fetchScores(name);
+        }
+      })
+      .catch(error => {
+        console.error('API key verification failed:', error);
+        router.push('/login');
+      });
   }, [router, searchParams]);
 
   const fetchScores = async (name: string) => {
@@ -126,9 +136,7 @@ const DashboardContentWithParams: React.FC = () => {
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartBar className="mr-2" />点数グラフ</h2>
-        <p className="mb-4 text-gray-700">
-          初期表示では「合計点」が表示されています。科目をチェックするとその科目のデータが表示され、合計点のチェックを外すと科目だけのデータで比較ができます。
-        </p>
+        <p className="mb-2 text-gray-600">初期表示は「合計点」が表示されています。科目をチェックすると、その科目のデータが表示されます。合計のチェックを外すと科目のみが表示されます。</p>
         <div className="flex justify-center mb-4">
           {['合計点', '国語', '社会', '数学', '理科', '英語'].map(subject => (
             <label key={subject} className="mr-4">

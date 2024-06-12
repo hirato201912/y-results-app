@@ -1,6 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { FaChartBar, FaChartLine, FaBalanceScale } from 'react-icons/fa';
 import RechartsBarChart from './../components/RechartsBarChart';
 import RadarChartComponent from './../components/RadarChartComponent';
 import LineChartComponent from './../components/LineChartComponent';
@@ -106,12 +107,12 @@ const DashboardContentWithParams: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">{studentName} の成績分析</h1>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4">前回との比較</h2>
+        <h2 className="text-xl font-semibold mb-4 flex items-center"><FaBalanceScale className="mr-2" />前回との比較</h2>
         <RadarChartComponent data={scores} />
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4">点数グラフ</h2>
+        <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartBar className="mr-2" />点数グラフ</h2>
         <div className="flex justify-center mb-4">
           {['合計点', '国語', '社会', '数学', '理科', '英語'].map(subject => (
             <label key={subject} className="mr-4">
@@ -129,7 +130,7 @@ const DashboardContentWithParams: React.FC = () => {
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4">順位グラフ</h2>
+        <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartLine className="mr-2" />順位グラフ</h2>
         <LineChartComponent data={scores} />
       </div>
 

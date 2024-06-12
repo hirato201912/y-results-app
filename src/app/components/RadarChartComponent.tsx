@@ -22,6 +22,10 @@ interface RadarChartComponentProps {
 }
 
 const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }) => {
+  if (data.length < 2) {
+    return <div>データが不足しています。</div>;
+  }
+
   // 最新のテストと前回のテストのデータを取得
   const latestTest = data[data.length - 1];
   const previousTest = data[data.length - 2];
@@ -43,8 +47,8 @@ const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }) => {
         <PolarRadiusAxis angle={30} domain={[0, 100]} />
         <Tooltip />
         <Legend />
-        <Radar name="最新" dataKey="最新" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-        <Radar name="前回" dataKey="前回" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+        <Radar name="最新" dataKey="最新" stroke="#ff0000" fill="#ff0000" fillOpacity={0.6} />
+        <Radar name="前回" dataKey="前回" stroke="#0000ff" fill="#0000ff" fillOpacity={0.6} />
       </RadarChart>
     </ResponsiveContainer>
   );

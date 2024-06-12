@@ -98,6 +98,7 @@ const DashboardContentWithParams: React.FC = () => {
                 type="checkbox"
                 checked={selectedSubjects.includes(subject)}
                 onChange={() => handleSubjectChange(subject)}
+                className="mr-1"
               />
               {subject}
             </label>

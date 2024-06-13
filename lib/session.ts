@@ -1,5 +1,4 @@
-import { IronSessionOptions } from "iron-session";
-import { withIronSessionApiRoute } from "iron-session/next";
+import { IronSessionOptions, withIronSession } from "iron-session";
 import { NextApiHandler } from "next";
 
 export const sessionOptions: IronSessionOptions = {
@@ -11,5 +10,5 @@ export const sessionOptions: IronSessionOptions = {
 };
 
 export function withSession(handler: NextApiHandler) {
-  return withIronSessionApiRoute(handler, sessionOptions);
+  return withIronSession(handler, sessionOptions);
 }

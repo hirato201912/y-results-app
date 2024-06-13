@@ -1,7 +1,8 @@
-import { withIronSessionApiRoute } from "iron-session/next";
+import { IronSessionOptions } from "iron-session";
+import { withIronSessionApiRoute } from "iron-session-next";
 import { NextApiHandler } from "next";
 
-export const sessionOptions = {
+export const sessionOptions: IronSessionOptions = {
   password: process.env.SECRET_COOKIE_PASSWORD as string,
   cookieName: "my-session",
   cookieOptions: {

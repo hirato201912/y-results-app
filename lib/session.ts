@@ -1,5 +1,5 @@
 import { IronSessionOptions } from "iron-session";
-import { withIronSessionApiRoute } from "iron-session-next";
+import { withIronSessionApiRoute } from "iron-session";
 import { NextApiHandler } from "next";
 
 export const sessionOptions: IronSessionOptions = {

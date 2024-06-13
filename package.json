@@ -14,6 +14,7 @@
     "@shadcn/ui": "^0.0.4",
     "@tanstack/react-table": "^8.17.3",
     "classnames": "^2.5.1",
+    "cookie": "^0.6.0",
     "cookie-parser": "^1.4.6",
     "iron-session": "^8.0.1",
     "next": "14.2.3",

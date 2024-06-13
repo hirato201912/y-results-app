@@ -1,10 +1,12 @@
-import { withSession } from "../../../../lib/session";
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from 'next';
+import cookie from 'cookie';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { api_key } = req.query;
 
-  const sessionApiKey = req.session.api_key;
+  // クッキーからAPIキーを取得
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const sessionApiKey = cookies.api_key;
 
   if (api_key === sessionApiKey) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,4 +23,4 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-export default withSession(handler);
+export default handler;

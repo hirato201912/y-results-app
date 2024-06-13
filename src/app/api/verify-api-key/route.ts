@@ -1,36 +1,24 @@
-import { NextResponse } from 'next/server';
+import { withSession } from "../../../lib/session";
+import { NextApiRequest, NextApiResponse } from "next";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const apiKey = searchParams.get('api_key');
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const { api_key } = req.query;
 
-  // ここでセッションからAPIキーを取得します（例：iron-sessionを使用している場合）
-  const sessionApiKey = request.cookies.get('api_key')?.value;
+  const sessionApiKey = req.session.api_key;
 
-  const response = new NextResponse(
-    JSON.stringify({ valid: apiKey === sessionApiKey }),
-    {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  if (api_key === sessionApiKey) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json({ valid: true });
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json({ valid: false });
+  }
+};
 
-  return response;
-}
-
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Content-Type': 'application/json',
-    },
-  });
-}
+export default withSession(handler);

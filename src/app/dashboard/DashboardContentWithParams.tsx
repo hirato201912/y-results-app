@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaChartBar, FaChartLine, FaHistory, FaChartArea, FaArrowLeft } from 'react-icons/fa';
-import RechartsBarChart from '../components/RechartsBarChart';
-import RadarChartComponent from '../components/RadarChartComponent';
-import LineChartComponent from '../components/LineChartComponent';
+import RechartsBarChart from '../../components/RechartsBarChart';
+import RadarChartComponent from '../../components/RadarChartComponent';
+import LineChartComponent from '../../components/LineChartComponent';
 import classNames from 'classnames';
 
 interface User {

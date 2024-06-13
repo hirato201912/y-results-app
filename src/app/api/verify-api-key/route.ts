@@ -1,4 +1,4 @@
-import { withSession } from "../../../lib/session";
+import { withSession } from "../../../../lib/session";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {

@@ -1,26 +1,29 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import cookie from 'cookie';
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const { api_key } = req.query;
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const apiKey = searchParams.get('api_key');
 
   // クッキーからAPIキーを取得
-  const cookies = cookie.parse(req.headers.cookie || '');
+  const cookies = cookie.parse(req.headers.get('cookie') || '');
   const sessionApiKey = cookies.api_key;
 
-  if (api_key === sessionApiKey) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({ valid: true });
+  if (apiKey === sessionApiKey) {
+    return NextResponse.json({ valid: true }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
+    });
   } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({ valid: false });
+    return NextResponse.json({ valid: false }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
+    });
   }
-};
-
-export default handler;
+}

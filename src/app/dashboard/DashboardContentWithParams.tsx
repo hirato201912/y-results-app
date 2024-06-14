@@ -192,7 +192,7 @@ const DashboardContentWithParams: React.FC = () => {
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">数学</th>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">理科</th>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">英語</th>
-                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">合計</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text左">合計</th>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">順位</th>
                 </tr>
               </thead>

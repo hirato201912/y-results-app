@@ -5,7 +5,9 @@ export async function GET(req: NextRequest) {
   const apiKey = searchParams.get('api_key');
 
   // クッキーからAPIキーを取得
-  const sessionApiKey = req.cookies.get('api_key')?.value;
+  const cookies = req.headers.get('cookie');
+  console.log('Cookies from Request Headers:', cookies);
+  const sessionApiKey = cookies ? cookies.split('; ').find(row => row.startsWith('api_key='))?.split('=')[1] : null;
 
   // デバッグ用のログ
   console.log('Request URL:', req.url);

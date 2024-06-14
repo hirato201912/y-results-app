@@ -43,9 +43,11 @@ const DashboardContentWithParams: React.FC = () => {
       return;
     }
 
-    fetch(`/api/verify-api-key?api_key=${apiKey}`)
-      .then(response => response.json())
-      .then(data => {
+    // APIキーの検証
+    const verifyApiKey = async () => {
+      try {
+        const response = await fetch(`/api/verify-api-key?api_key=${apiKey}`);
+        const data = await response.json();
         if (!data.valid) {
           router.push('/login');
         } else {
@@ -54,11 +56,13 @@ const DashboardContentWithParams: React.FC = () => {
           setUser(userSession);
           fetchScores(name);
         }
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('API key verification failed:', error);
         router.push('/login');
-      });
+      }
+    };
+
+    verifyApiKey();
   }, [router]);
 
   const fetchScores = async (name: string) => {

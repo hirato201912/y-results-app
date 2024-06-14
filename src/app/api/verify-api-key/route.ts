@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import cookie from 'cookie';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const apiKey = searchParams.get('api_key');
 
   // クッキーからAPIキーを取得
-  const cookies = cookie.parse(req.headers.get('cookie') || '');
-  const sessionApiKey = cookies.api_key;
+  const sessionApiKey = req.cookies.get('api_key')?.value;
 
   if (apiKey === sessionApiKey) {
     return NextResponse.json({ valid: true }, {

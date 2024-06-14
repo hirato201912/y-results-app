@@ -38,16 +38,22 @@ const DashboardContentWithParams: React.FC = () => {
     const userParam = params.get('user');
     const apiKey = params.get('api_key');
 
+    // デバッグ用のログ
+    console.log('URL Params:', params.toString());
+    console.log('Name:', name);
+    console.log('User:', userParam);
+    console.log('API Key:', apiKey);
+
     if (!name || !userParam || !apiKey) {
       router.push('/login');
       return;
     }
 
-    // APIキーの検証
     const verifyApiKey = async () => {
       try {
         const response = await fetch(`/api/verify-api-key?api_key=${apiKey}`);
         const data = await response.json();
+        console.log('API Key Verification Response:', data);
         if (!data.valid) {
           router.push('/login');
         } else {

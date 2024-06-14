@@ -7,6 +7,12 @@ export async function GET(req: NextRequest) {
   // クッキーからAPIキーを取得
   const sessionApiKey = req.cookies.get('api_key')?.value;
 
+  // デバッグ用のログ
+  console.log('Request URL:', req.url);
+  console.log('Search Params:', Array.from(searchParams.entries()));
+  console.log('API Key from URL:', apiKey);
+  console.log('API Key from Cookie:', sessionApiKey);
+
   if (apiKey === sessionApiKey) {
     return NextResponse.json({ valid: true }, {
       headers: {

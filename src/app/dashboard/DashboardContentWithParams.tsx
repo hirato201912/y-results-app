@@ -53,13 +53,15 @@ const DashboardContentWithParams: React.FC = () => {
 
     const verifyApiKey = async () => {
       try {
-        const response = await fetch(`/api/verify-api-key?api_key=${apiKey}`);
+        const response = await fetch(`/api/verify-api-key?api_key=${apiKey}`, {
+          credentials: 'include'
+        });
         const data = await response.json();
         console.log('API Key Verification Response:', data);
         if (!data.valid) {
           setTimeout(() => {
             router.push('/login');
-          }, 5000); // 1秒の遅延を追加
+          }, 1000); // 1秒の遅延を追加
         } else {
           const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
           setStudentName(name);
@@ -70,7 +72,7 @@ const DashboardContentWithParams: React.FC = () => {
         console.error('API key verification failed:', error);
         setTimeout(() => {
           router.push('/login');
-        }, 5000); // 1秒の遅延を追加
+        }, 1000); // 1秒の遅延を追加
       }
     };
 

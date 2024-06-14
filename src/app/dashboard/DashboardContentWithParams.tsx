@@ -38,7 +38,6 @@ const DashboardContentWithParams: React.FC = () => {
     const userParam = params.get('user');
     const apiKey = params.get('api_key');
 
-    // デバッグ用のログ
     console.log('URL Params:', params.toString());
     console.log('Name:', name);
     console.log('User:', userParam);
@@ -47,21 +46,19 @@ const DashboardContentWithParams: React.FC = () => {
     if (!name || !userParam || !apiKey) {
       setTimeout(() => {
         router.push('/login');
-      }, 1000); // 1秒の遅延を追加
+      }, 1000);
       return;
     }
 
     const verifyApiKey = async () => {
       try {
-        const response = await fetch(`/api/verify-api-key?api_key=${apiKey}`, {
-          credentials: 'include'
-        });
+        const response = await fetch(`/api/verify-api-key?api_key=${apiKey}`);
         const data = await response.json();
         console.log('API Key Verification Response:', data);
         if (!data.valid) {
           setTimeout(() => {
             router.push('/login');
-          }, 1000); // 1秒の遅延を追加
+          }, 5000);
         } else {
           const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
           setStudentName(name);
@@ -72,7 +69,7 @@ const DashboardContentWithParams: React.FC = () => {
         console.error('API key verification failed:', error);
         setTimeout(() => {
           router.push('/login');
-        }, 1000); // 1秒の遅延を追加
+        }, 5000);
       }
     };
 
@@ -189,10 +186,10 @@ const DashboardContentWithParams: React.FC = () => {
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">テスト名</th>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">国語</th>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">社会</th>
-                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">数学</th>
-                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">理科</th>
-                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">英語</th>
-                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text左">合計</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text左">数学</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text左">理科</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text左">英語</th>
+                  <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">合計</th>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">順位</th>
                 </tr>
               </thead>

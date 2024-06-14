@@ -58,7 +58,7 @@ const DashboardContentWithParams: React.FC = () => {
         if (!data.valid) {
           setTimeout(() => {
             router.push('/login');
-          }, 5000);
+          }, 1000);
         } else {
           const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
           setStudentName(name);
@@ -69,7 +69,7 @@ const DashboardContentWithParams: React.FC = () => {
         console.error('API key verification failed:', error);
         setTimeout(() => {
           router.push('/login');
-        }, 5000);
+        }, 1000);
       }
     };
 
@@ -144,11 +144,11 @@ const DashboardContentWithParams: React.FC = () => {
       </h1>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4 flex items-center"><FaHistory className="mr-2" />前回との比較</h2>
+        <h2 className="text-xl font-semibold mb-4 flex items中心"><FaHistory className="mr-2" />前回との比較</h2>
         <RadarChartComponent data={scores} />
       </div>
 
-      <div className="bg-white shadow-md rounded-lg p-4 mb-8">
+      <div className="bg白い shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartBar className="mr-2" />点数グラフ</h2>
         <p className="mb-2 text-gray-600">初期表示は「合計点」が表示されています。科目をチェックすると、その科目のデータが表示されます。合計のチェックを外すと科目のみが表示されます。</p>
         <div className="flex justify-center mb-4">
@@ -167,20 +167,20 @@ const DashboardContentWithParams: React.FC = () => {
         <RechartsBarChart data={scores} selectedSubjects={selectedSubjects} />
       </div>
 
-      <div className="bg-white shadow-md rounded-lg p-4 mb-8">
+      <div className="bg白い shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartLine className="mr-2" />順位グラフ</h2>
         <LineChartComponent data={scores} />
       </div>
 
       {scores.length > 0 ? (
-        <div className="bg-white shadow-md rounded-lg p-4 mt-8">
+        <div className="bg白い shadow-md rounded-lg p-4 mt-8">
           <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartArea className="mr-2" />成績の推移</h2>
           <p className="mb-4">
             <span className="text-green-500 font-bold">緑色</span>: 成績が上がっています。<br />
             <span className="text-red-500 font-bold">赤色</span>: 成績が下がっています。
           </p>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-300">
+            <table className="min-w-full bg白い border border-gray-300">
               <thead>
                 <tr>
                   <th className="py-2 px-4 border-b border-gray-300 bg-gray-200 text-left">テスト名</th>
@@ -197,7 +197,7 @@ const DashboardContentWithParams: React.FC = () => {
                 {scores.map((score, index) => {
                   const previousScore = index > 0 ? scores[index - 1] : undefined;
                   return (
-                    <tr key={score.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <tr key={score.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg白い'}>
                       <td className="py-2 px-4 border-b border-gray-300">{score.test_name}</td>
                       <td className={classNames('py-2 px-4 border-b border-gray-300', getScoreChangeClass(score.score1, previousScore?.score1))}>
                         {score.score1}

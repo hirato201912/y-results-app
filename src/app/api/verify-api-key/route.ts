@@ -8,16 +8,10 @@ export async function GET(req: NextRequest) {
   console.log('Search Params:', searchParams);
   console.log('API Key from URL:', apiKey);
 
-  // ダミーデータベースの例（実際にはデータベースを使用）
-  const sessionApiKey = 'セッションに保存されたAPIキー'; // 例：セッションまたはデータベースから取得
-  const sessionApiKeyExpiry = 1622520000; // 例：セッションまたはデータベースから取得（Unixタイムスタンプ）
+  // 事前に決めたAPIキー
+  const predefinedApiKey = 'your-predefined-api-key';
 
-  if (!apiKey) {
-    return NextResponse.json({ valid: false });
-  }
-
-  const currentTime = Math.floor(Date.now() / 1000);
-  if (apiKey === sessionApiKey && currentTime < sessionApiKeyExpiry) {
+  if (apiKey === predefinedApiKey) {
     return NextResponse.json({ valid: true });
   } else {
     return NextResponse.json({ valid: false });

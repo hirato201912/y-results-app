@@ -1,4 +1,3 @@
-"use client"
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaChartBar, FaChartLine, FaHistory, FaChartArea, FaArrowLeft } from 'react-icons/fa';
@@ -36,25 +35,37 @@ const DashboardContentWithParams: React.FC = () => {
   useEffect(() => {
     const name = searchParams.get('name');
     const userParam = searchParams.get('user');
-    const api_key = searchParams.get('api_key');
-    // alert(api_key);
+    const apiKey = searchParams.get('api_key');
 
-    if (name && userParam) {
-      try {
-        const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
-        setStudentName(name);
-        setUser(userSession);
-        fetchScores(name);
-      } catch (error) {
-        console.error('Failed to parse user session:', error);
-        router.push('/login');
-      }
+    if (name && userParam && apiKey) {
+      verifyApiKey(apiKey).then(isValid => {
+        if (isValid) {
+          try {
+            const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
+            setStudentName(name);
+            setUser(userSession);
+            fetchScores(name);
+          } catch (error) {
+            console.error('Failed to parse user session:', error);
+            router.push('/login');
+          }
+        } else {
+          alert('APIキーが無効です。');
+          router.push('/login');
+        }
+      });
     } else {
-     
       alert('パラメータが不正です。');
       router.push('/login');
     }
   }, [router, searchParams]);
+
+  const verifyApiKey = async (apiKey: string) => {
+    const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/verify_api_key.php?api_key=${apiKey}`);
+    const data = await response.json();
+    // alert(`Provided API Key: ${data.provided_api_key}\nExpected API Key: ${data.expected_api_key}`);
+    return data.valid;
+  };
 
   const fetchScores = async (name: string) => {
     try {
@@ -129,9 +140,9 @@ const DashboardContentWithParams: React.FC = () => {
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center"><FaChartBar className="mr-2" />点数グラフ</h2>
-        <p className="mb-4 text-gray-700">
-          初期表示では「合計点」が表示されています。科目をチェックするとその科目のデータが表示され、合計点のチェックを外すと科目ごとのデータが分かりやすく表示されます。
-        </p>
+        <div className="mb-4 text-center text-sm text-gray-600">
+          初期表示は「合計」が表示されていますが、科目をチェックするとその科目のデータが表示されます。合計のチェックを外すと、科目のみが表示されます。
+        </div>
         <div className="flex justify-center mb-4">
           {['合計点', '国語', '社会', '数学', '理科', '英語'].map(subject => (
             <label key={subject} className="mr-4">
@@ -216,4 +227,3 @@ const DashboardContentWithParams: React.FC = () => {
 };
 
 export default DashboardContentWithParams;
-

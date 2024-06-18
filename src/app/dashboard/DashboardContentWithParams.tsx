@@ -34,15 +34,16 @@ const DashboardContentWithParams: React.FC = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['合計点']);
 
   useEffect(() => {
-    const name = searchParams.get('name');
-    const userParam = searchParams.get('user');
-    const apiKey = searchParams.get('api_key');
+    const verifyApiKey = async () => {
+      const name = searchParams.get('name');
+      const userParam = searchParams.get('user');
+      const apiKey = searchParams.get('api_key');
 
-    if (name && userParam && apiKey) {
-      // PHPファイルでAPIキーを検証
-      fetch(`https://mikawayatsuhashi.sakura.ne.jp/verify_api_key.php?api_key=${apiKey}`)
-        .then(response => response.json())
-        .then(data => {
+      if (name && userParam && apiKey) {
+        try {
+          const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/verify_api_key.php?api_key=${apiKey}`);
+          const data = await response.json();
+
           if (data.valid) {
             try {
               const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
@@ -57,15 +58,17 @@ const DashboardContentWithParams: React.FC = () => {
             alert('APIキーが無効です。');
             router.push('/login');
           }
-        })
-        .catch(error => {
+        } catch (error) {
           console.error('APIキーの検証に失敗しました:', error);
           router.push('/login');
-        });
-    } else {
-      alert('パラメータが不正です。');
-      router.push('/login');
-    }
+        }
+      } else {
+        alert('パラメータが不正です。');
+        router.push('/login');
+      }
+    };
+
+    verifyApiKey();
   }, [router, searchParams]);
 
   const fetchScores = async (name: string) => {

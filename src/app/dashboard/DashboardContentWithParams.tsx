@@ -37,7 +37,7 @@ const DashboardContentWithParams: React.FC = () => {
     const name = searchParams.get('name');
     const userParam = searchParams.get('user');
     const api_key = searchParams.get('api_key');
-    alert(api_key);
+    // alert(api_key);
 
     if (name && userParam) {
       try {

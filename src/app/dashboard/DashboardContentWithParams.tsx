@@ -36,18 +36,34 @@ const DashboardContentWithParams: React.FC = () => {
   useEffect(() => {
     const name = searchParams.get('name');
     const userParam = searchParams.get('user');
+    const apiKey = searchParams.get('api_key');
 
-    if (name && userParam) {
-      try {
-        const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
-        setStudentName(name);
-        setUser(userSession);
-        fetchScores(name);
-      } catch (error) {
-        console.error('Failed to parse user session:', error);
-        router.push('/login');
-      }
+    if (name && userParam && apiKey) {
+      // PHPファイルでAPIキーを検証
+      fetch(`https://mikawayatsuhashi.sakura.ne.jp/verify_api_key.php?api_key=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.valid) {
+            try {
+              const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
+              setStudentName(name);
+              setUser(userSession);
+              fetchScores(name);
+            } catch (error) {
+              console.error('Failed to parse user session:', error);
+              router.push('/login');
+            }
+          } else {
+            alert('APIキーが無効です。');
+            router.push('/login');
+          }
+        })
+        .catch(error => {
+          console.error('APIキーの検証に失敗しました:', error);
+          router.push('/login');
+        });
     } else {
+      alert('パラメータが不正です。');
       router.push('/login');
     }
   }, [router, searchParams]);

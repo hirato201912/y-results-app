@@ -34,41 +34,26 @@ const DashboardContentWithParams: React.FC = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['合計点']);
 
   useEffect(() => {
-    const verifyApiKey = async () => {
-      const name = searchParams.get('name');
-      const userParam = searchParams.get('user');
-      const apiKey = searchParams.get('api_key');
+    const name = searchParams.get('name');
+    const userParam = searchParams.get('user');
+    const api_key = searchParams.get('api_key');
+    alert(api_key);
 
-      if (name && userParam && apiKey) {
-        try {
-          const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/verify_api_key.php?api_key=${apiKey}`);
-          const data = await response.json();
-
-          if (data.valid) {
-            try {
-              const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
-              setStudentName(name);
-              setUser(userSession);
-              fetchScores(name);
-            } catch (error) {
-              console.error('Failed to parse user session:', error);
-              router.push('/login');
-            }
-          } else {
-            alert('APIキーが無効です。');
-            router.push('/login');
-          }
-        } catch (error) {
-          console.error('APIキーの検証に失敗しました:', error);
-          router.push('/login');
-        }
-      } else {
-        alert('パラメータが不正です。');
+    if (name && userParam) {
+      try {
+        const userSession = JSON.parse(decodeURIComponent(userParam)) as User;
+        setStudentName(name);
+        setUser(userSession);
+        fetchScores(name);
+      } catch (error) {
+        console.error('Failed to parse user session:', error);
         router.push('/login');
       }
-    };
-
-    verifyApiKey();
+    } else {
+     
+      alert('パラメータが不正です。');
+      router.push('/login');
+    }
   }, [router, searchParams]);
 
   const fetchScores = async (name: string) => {

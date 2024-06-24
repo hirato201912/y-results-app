@@ -4,10 +4,11 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header('Content-Type: application/json');
 
+// 事前に定義されたAPIキー
 $definedApiKey = '0401_predefined_api_key';
 
 $apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
-$data = json_decode(file_get_contents("php://input"), true);
+$studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
 
 // APIキーの検証
 if ($apiKey !== $definedApiKey) {
@@ -22,33 +23,36 @@ if ($conn->connect_error) {
     die(json_encode(array("error" => $conn->connect_error)));
 }
 
-// 進捗データを保存
+// SQL クエリ実行（テスト情報を取得）
 $sql = "
-INSERT INTO west_progress (student_id, test_id, week, english, math, science, social, japanese) 
-VALUES ((SELECT west_student_id FROM west_student WHERE student = ?), (SELECT test_id FROM tests WHERE test_name = ?), ?, ?, ?, ?, ?, ?)
+SELECT 
+    t.test_id, 
+    t.test_name, 
+    t.start_date
+FROM 
+    tests t
+JOIN 
+    student s ON t.school_id = s.school_id
+WHERE 
+    s.student = ?
 ";
-
 $stmt = $conn->prepare($sql);
-$stmt->bind_param(
-    "ssssssss",
-    $data['studentName'],
-    $data['testName'], // 修正
-    $data['week'],
-    $data['progress']['english'],
-    $data['progress']['math'],
-    $data['progress']['science'],
-    $data['progress']['social'],
-    $data['progress']['japanese']
-);
+$stmt->bind_param("s", $studentName);
+$stmt->execute();
+$result = $stmt->get_result();
 
-if ($stmt->execute()) {
-    echo json_encode(array("status" => "success"));
-} else {
-    echo json_encode(array("status" => "error", "error" => $stmt->error));
+// 結果を配列に格納
+$tests = array();
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        array_push($tests, $row);
+    }
 }
+
+// JSON 形式で出力
+echo json_encode(array("tests" => $tests));
 
 // 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>
-

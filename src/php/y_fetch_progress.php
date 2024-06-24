@@ -4,11 +4,12 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header('Content-Type: application/json');
 
-// 事前に定義されたAPIキー
 $definedApiKey = '0401_predefined_api_key';
 
 $apiKey = isset($_GET['apiKey']) ? $_GET['apiKey'] : '';
 $studentName = isset($_GET['studentName']) ? $_GET['studentName'] : '';
+$testName = isset($_GET['testName']) ? $_GET['testName'] : ''; // 変数名を修正
+$week = isset($_GET['week']) ? $_GET['week'] : '';
 
 // APIキーの検証
 if ($apiKey !== $definedApiKey) {
@@ -26,52 +27,35 @@ if ($conn->connect_error) {
 // SQL クエリ実行（進捗情報を取得）
 $sql = "
 SELECT 
-    t.test_name,
-    p.week, 
-    p.english, 
-    p.math, 
-    p.science, 
-    p.social, 
-    p.japanese
+    english, math, science, social, japanese
 FROM 
-    west_progress p
-JOIN 
-    tests t ON p.test_id = t.test_id
+    y_progress
 WHERE 
-    p.progress_id IN (
-        SELECT MAX(progress_id)
-        FROM west_progress
-        WHERE student_id = (SELECT west_student_id FROM west_student WHERE student = ?)
-        GROUP BY test_id, week
-    )
-ORDER BY 
-    t.test_name, 
-    CASE 
-        WHEN p.week = '3週間前' THEN 1
-        WHEN p.week = '2週間前' THEN 2
-        WHEN p.week = '1週間前' THEN 3
-        ELSE 4
-    END;
+    student_id = (SELECT student_id FROM student WHERE student = ?) 
+    AND test_id = (SELECT test_id FROM tests WHERE test_name = ?) 
+    AND week = ?
+ORDER BY progress_id DESC
+LIMIT 1
 ";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $studentName);
+$stmt->bind_param("sss", $studentName, $testName, $week); // 変数名を修正
 $stmt->execute();
 $result = $stmt->get_result();
 
 // 結果を配列に格納
 $progress = array();
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        array_push($progress, $row);
-    }
+if ($row = $result->fetch_assoc()) {
+    $progress = $row;
 }
 
 // JSON 形式で出力
 echo json_encode(array("progress" => $progress));
 
-// 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>
+
+
+
 

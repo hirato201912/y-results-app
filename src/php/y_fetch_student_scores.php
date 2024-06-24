@@ -34,7 +34,7 @@ if ($mysqli->connect_errno) {
 }
 
 // SQLクエリの実行
-$sql = "SELECT id, test_name, result, post_date, student, score1, score2, score3, score4, score5, score6, score7 FROM west_result WHERE student = ? ORDER BY id ASC";
+$sql = "SELECT id, test_name, result, post_date, student, score1, score2, score3, score4, score5, score6, score7 FROM result WHERE student = ? ORDER BY id ASC";
 $stmt = $mysqli->prepare($sql);
 $stmt->bind_param('s', $studentName);
 $stmt->execute();

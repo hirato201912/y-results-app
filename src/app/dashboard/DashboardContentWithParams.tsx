@@ -69,7 +69,7 @@ const DashboardContentWithParams: React.FC = () => {
 
   const fetchScores = async (name: string) => {
     try {
-      const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/fetch_student_scores.php?name=${encodeURIComponent(name)}`);
+      const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_fetch_student_scores.php?name=${encodeURIComponent(name)}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }

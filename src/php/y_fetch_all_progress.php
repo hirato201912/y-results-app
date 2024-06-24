@@ -23,36 +23,55 @@ if ($conn->connect_error) {
     die(json_encode(array("error" => $conn->connect_error)));
 }
 
-// SQL クエリ実行（テスト情報を取得）
+// SQL クエリ実行（進捗情報を取得）
 $sql = "
 SELECT 
-    t.test_id, 
-    t.test_name, 
-    t.start_date
+    t.test_name,
+    p.week, 
+    p.english, 
+    p.math, 
+    p.science, 
+    p.social, 
+    p.japanese
 FROM 
-    tests t
+    y_progress p
 JOIN 
-    west_student s ON t.school_id = s.school_id
+    tests t ON p.test_id = t.test_id
 WHERE 
-    s.student = ?
+    p.progress_id IN (
+        SELECT MAX(progress_id)
+        FROM y_progress
+        WHERE student_id = (SELECT student_id FROM student WHERE student = ?)
+        GROUP BY test_id, week
+    )
+ORDER BY 
+    t.test_name, 
+    CASE 
+        WHEN p.week = '3週間前' THEN 1
+        WHEN p.week = '2週間前' THEN 2
+        WHEN p.week = '1週間前' THEN 3
+        ELSE 4
+    END;
 ";
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $studentName);
 $stmt->execute();
 $result = $stmt->get_result();
 
 // 結果を配列に格納
-$tests = array();
+$progress = array();
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        array_push($tests, $row);
+        array_push($progress, $row);
     }
 }
 
 // JSON 形式で出力
-echo json_encode(array("tests" => $tests));
+echo json_encode(array("progress" => $progress));
 
 // 接続を閉じる
 $stmt->close();
 $conn->close();
 ?>
+

@@ -25,12 +25,12 @@ if ($conn->connect_error) {
 // SQL クエリ実行（生徒情報を取得）
 $sql = "
 SELECT 
-    s.west_student_id as student_id, 
+    s.student_id as student_id, 
     s.student, 
     ms.school_name as belonging, 
     g.grade_name as grade
 FROM 
-    west_student s
+    student s
 JOIN 
     middle_schools ms ON s.school_id = ms.school_id
 JOIN 

@@ -162,7 +162,7 @@ export default function ProgressTableView({
         try {
           // 2. bomb countを更新
           const updateBombResponse = await fetch(
-            'https://mikawayatsuhashi.sakura.ne.jp/west_update_bomb_count.php',
+            'https://mikawayatsuhashi.sakura.ne.jp/y_update_bomb_count.php',
             {
               method: 'POST',
               headers: {

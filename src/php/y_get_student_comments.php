@@ -120,7 +120,8 @@ try {
         $types .= "ss";
     }
     
-    $query .= " ORDER BY post_date DESC LIMIT ? OFFSET ?";
+    // 固定コメントを先頭に表示し、その後は投稿日時の降順で表示
+    $query .= " ORDER BY fixed DESC, post_date DESC LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
     $types .= "ii";

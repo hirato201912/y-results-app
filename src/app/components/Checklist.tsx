@@ -27,7 +27,7 @@ const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) =>
     console.log('Student Name:', studentName);
 
     if (testName && week && studentName) {
-      fetch(`https://mikawayatsuhashi.sakura.ne.jp/west_fetch_progress.php?apiKey=${apiKey}&studentName=${encodeURIComponent(studentName)}&testName=${encodeURIComponent(testName)}&week=${encodeURIComponent(week)}`)
+      fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_fetch_progress.php?apiKey=${apiKey}&studentName=${encodeURIComponent(studentName)}&testName=${encodeURIComponent(testName)}&week=${encodeURIComponent(week)}`)
         .then(response => response.json())
         .then(data => {
           console.log('Fetched Progress Data:', data);
@@ -76,7 +76,7 @@ const Checklist: React.FC<ChecklistProps> = ({ studentName, testName, week }) =>
       progress
     });
 
-    fetch(`https://mikawayatsuhashi.sakura.ne.jp/west_save_progress.php?apiKey=${apiKey}`, {
+    fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_save_progress.php?apiKey=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

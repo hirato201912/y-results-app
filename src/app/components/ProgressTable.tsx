@@ -20,7 +20,7 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ studentName }) => {
 
   useEffect(() => {
     const apiKey = '0401_predefined_api_key';
-    fetch(`https://mikawayatsuhashi.sakura.ne.jp/west_fetch_all_progress.php?apiKey=${apiKey}&studentName=${studentName}`)
+    fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_fetch_all_progress.php?apiKey=${apiKey}&studentName=${studentName}`)
       .then(response => response.json())
       .then(data => {
         setProgressData(data.progress);

@@ -19,6 +19,9 @@ try {
     $rawData = file_get_contents('php://input');
     $data = json_decode($rawData, true);
 
+    // デバッグ用
+    error_log("Received data: " . $rawData);
+
     if (!isset($data['student_id']) || !isset($data['unit_order_id'])) {
         throw new Exception("必須パラメータが不足しています");
     }
@@ -27,6 +30,9 @@ try {
     $unitOrderId = intval($data['unit_order_id']);
     $teacherId = isset($data['teacher_id']) ? intval($data['teacher_id']) : null;
     $updateData = $data['update_data'] ?? [];
+
+    // デバッグ用
+    error_log("Update data: " . json_encode($updateData));
 
     $conn->begin_transaction();
 
@@ -39,62 +45,88 @@ try {
     $checkStmt->close();
 
     if ($exists) {
-        $updateParts = [];
-        $updateParams = [];
-        $types = "";
+        // 特別なケース：completion_dateをnullに設定する場合の処理
+        if (array_key_exists('completion_date', $updateData) && $updateData['completion_date'] === null) {
+            // 直接SQL文に組み込む方法
+            $updateSql = "UPDATE y_progress_records SET 
+                          completion_date = NULL, 
+                          teacher_id = NULL 
+                          WHERE student_id = ? AND unit_order_id = ?";
+            
+            $stmt = $conn->prepare($updateSql);
+            if (!$stmt) {
+                throw new Exception("UPDATE準備エラー: " . $conn->error);
+            }
+            
+            $stmt->bind_param("ii", $studentId, $unitOrderId);
+            
+            if (!$stmt->execute()) {
+                throw new Exception("UPDATE実行エラー: " . $stmt->error);
+            }
+        } else {
+            // 通常の更新処理
+            $updateParts = [];
+            $updateParams = [];
+            $types = "";
+            
+            // 完了処理の場合
+            if (isset($updateData['completion_date']) && $updateData['completion_date'] !== null) {
+                $updateParts[] = "completion_date = ?";
+                $updateParts[] = "teacher_id = ?";
+                $updateParams[] = $updateData['completion_date'];
+                $updateParams[] = $teacherId;
+                $types .= "si"; // string, integer
+            }
 
-        // 完了処理の場合
-        if (isset($updateData['completion_date'])) {
-            $updateParts[] = "completion_date = ?";
-            $updateParts[] = "teacher_id = ?";
-            $updateParams[] = $updateData['completion_date'];
-            $updateParams[] = $teacherId;
-            $types .= "si"; // string, integer
-        }
+            // その他のフィールドの更新
+            if (isset($updateData['is_school_completed'])) {
+                $updateParts[] = "is_school_completed = ?";
+                $updateParams[] = $updateData['is_school_completed'];
+                $types .= "i";
+            }
 
-        // その他のフィールドの更新
-        if (isset($updateData['is_school_completed'])) {
-            $updateParts[] = "is_school_completed = ?";
-            $updateParams[] = $updateData['is_school_completed'];
-            $types .= "i";
-        }
+            if (isset($updateData['homework_assigned'])) {
+                $updateParts[] = "homework_assigned = ?";
+                $updateParams[] = $updateData['homework_assigned'];
+                $types .= "i";
+            }
 
-        if (isset($updateData['homework_assigned'])) {
-            $updateParts[] = "homework_assigned = ?";
-            $updateParams[] = $updateData['homework_assigned'];
-            $types .= "i";
-        }
+            if (isset($updateData['ct_status'])) {
+                $updateParts[] = "ct_status = ?";
+                $updateParams[] = $updateData['ct_status'];
+                $types .= "s";
+            }
 
-        if (isset($updateData['ct_status'])) {
-            $updateParts[] = "ct_status = ?";
-            $updateParams[] = $updateData['ct_status'];
-            $types .= "s";
-        }
+            if (isset($updateData['homework_status'])) {
+                $updateParts[] = "homework_status = ?";
+                $updateParams[] = $updateData['homework_status'];
+                $types .= "s";
+            }
 
-        if (isset($updateData['homework_status'])) {
-            $updateParts[] = "homework_status = ?";
-            $updateParams[] = $updateData['homework_status'];
-            $types .= "s";
-        }
+            // 更新するフィールドがない場合はエラー
+            if (empty($updateParts)) {
+                throw new Exception("更新するフィールドがありません");
+            }
 
-        // WHERE句のパラメータを追加
-        $updateParams[] = $studentId;
-        $updateParams[] = $unitOrderId;
-        $types .= "ii";
+            // WHERE句のパラメータを追加
+            $updateParams[] = $studentId;
+            $updateParams[] = $unitOrderId;
+            $types .= "ii";
 
-        $updateSql = "UPDATE y_progress_records SET " . 
-                    implode(", ", $updateParts) . 
-                    " WHERE student_id = ? AND unit_order_id = ?";
+            $updateSql = "UPDATE y_progress_records SET " . 
+                        implode(", ", $updateParts) . 
+                        " WHERE student_id = ? AND unit_order_id = ?";
 
-        $stmt = $conn->prepare($updateSql);
-        if (!$stmt) {
-            throw new Exception("UPDATE準備エラー: " . $conn->error);
-        }
+            $stmt = $conn->prepare($updateSql);
+            if (!$stmt) {
+                throw new Exception("UPDATE準備エラー: " . $conn->error);
+            }
 
-        $stmt->bind_param($types, ...$updateParams);
-        
-        if (!$stmt->execute()) {
-            throw new Exception("UPDATE実行エラー: " . $stmt->error);
+            $stmt->bind_param($types, ...$updateParams);
+            
+            if (!$stmt->execute()) {
+                throw new Exception("UPDATE実行エラー: " . $stmt->error);
+            }
         }
     } else {
         // 新規レコードの作成
@@ -133,10 +165,12 @@ try {
     
     echo json_encode([
         "success" => true,
-        "message" => "更新が完了しました",
+        "message" => (array_key_exists('completion_date', $updateData) && $updateData['completion_date'] === null) ? 
+                     "完了を取り消しました" : "更新が完了しました",
         "debug" => [
             "action" => $exists ? "update" : "insert",
-            "affected_rows" => $stmt->affected_rows
+            "affected_rows" => $stmt->affected_rows,
+            "is_completion_cancel" => (array_key_exists('completion_date', $updateData) && $updateData['completion_date'] === null)
         ]
     ]);
 

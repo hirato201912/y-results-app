@@ -13,10 +13,13 @@ import {
   FaChevronUp,
   FaBookOpen,
   FaClipboardList,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaComments
 } from 'react-icons/fa';
 import LessonProgressTable from './LessonProgressTable';
+import StudentCommentsView from './StudentCommentsView';
 
+// 型定義
 interface ProgressParams {
   schoolId: number;
   gradeId: number;
@@ -25,6 +28,196 @@ interface ProgressParams {
   gender: 'male' | 'female';
   bombCount?: number;
 }
+
+interface InlineStudentInstructionProps {
+  studentId: number;
+}
+
+// インラインで生徒指示コンポーネントを定義
+const InlineStudentInstruction: React.FC<InlineStudentInstructionProps> = ({ studentId }) => {
+  const [instruction, setInstruction] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editedInstruction, setEditedInstruction] = useState<string>('');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  useEffect(() => {
+    // コメント内容を取得する処理
+    const fetchInstruction = async () => {
+      try {
+        const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_student_instruction.php?student_id=${studentId}&action=get`);
+        const data = await response.json();
+        if (data.success) {
+          setInstruction(data.instruction || '');
+        }
+      } catch (err) {
+        setError('データの取得に失敗しました');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (studentId) {
+      fetchInstruction();
+    }
+  }, [studentId]);
+
+  // 保存処理
+  const saveInstruction = async () => {
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('student_id', studentId.toString());
+      formData.append('instruction', editedInstruction);
+      formData.append('action', 'update');
+      
+      const response = await fetch('https://mikawayatsuhashi.sakura.ne.jp/y_student_instruction.php', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setInstruction(editedInstruction);
+        setIsEditing(false);
+        return true;
+      } else {
+        setError('保存に失敗しました');
+        return false;
+      }
+    } catch (err) {
+      setError('エラーが発生しました');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEdit = () => {
+    setEditedInstruction(instruction);
+    setIsEditing(true);
+    setError(null);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setError(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm mb-4">
+        <div className="p-3 bg-[#4AC0B9]/10 border-b border-[#4AC0B9]/30">
+          <h3 className="text-base font-medium text-[#4AC0B9] flex items-center">
+            <span className="mr-2">👨‍🏫</span>
+            <span className="mr-1 bg-[#4AC0B9] text-white text-xs px-2 py-0.5 rounded">塾長専用</span>
+            重要指示・情報
+          </h3>
+        </div>
+        <div className="p-6 flex justify-center items-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#4AC0B9]"></div>
+          <span className="ml-2 text-gray-600">読み込み中...</span>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-4 border-t-4 border-t-[#4AC0B9]">
+      <div className="p-3 bg-[#4AC0B9]/10 border-b border-[#4AC0B9]/30 flex justify-between items-center">
+        <h3 className="text-base font-medium text-[#4AC0B9] flex items-center">
+          <span className="mr-2">👨‍🏫</span>
+          <span className="mr-1 bg-[#4AC0B9] text-white text-xs px-2 py-0.5 rounded">塾長専用</span>
+          重要指示・情報
+        </h3>
+        {!isEditing && (
+          <button
+            onClick={handleEdit}
+            className="px-3 py-1 text-xs font-medium text-[#4AC0B9] bg-white border border-[#4AC0B9]/30 rounded-full hover:bg-[#4AC0B9]/5 transition-colors duration-200 flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            塾長編集
+          </button>
+        )}
+      </div>
+  
+      <div className="p-4">
+        {isEditing ? (
+          <div className="space-y-4">
+            <div className="flex items-center text-xs text-gray-500 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[#4AC0B9]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>このフィールドは塾長のみが編集できます</span>
+            </div>
+            <textarea
+              value={editedInstruction}
+              onChange={(e) => setEditedInstruction(e.target.value)}
+              className="w-full p-3 border border-[#4AC0B9]/30 rounded-md focus:ring-2 focus:ring-[#4AC0B9]/50 focus:border-[#4AC0B9]"
+              rows={4}
+              placeholder="生徒の学習方針や注意点など、重要な指示・特記事項を入力してください..."
+              disabled={isSaving}
+            />
+              
+            {error && (
+              <div className="p-3 bg-red-50 border-l-4 border-red-500 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+              
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors duration-200"
+                disabled={isSaving}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={saveInstruction}
+                className="px-4 py-2 text-sm text-white bg-[#4AC0B9] rounded-md hover:bg-[#3DA8A2] transition-colors duration-200 flex items-center"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    保存中...
+                  </span>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    保存
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {instruction ? (
+              <div className="p-4 bg-[#4AC0B9]/5 border border-[#4AC0B9]/20 rounded-lg whitespace-pre-wrap text-red-700 shadow-sm">
+                {instruction}
+              </div>
+            ) : (
+              <div className="p-4 text-gray-500 italic text-center border border-dashed border-gray-300 rounded-lg">
+                塾長からの重要指示・情報はまだありません
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 
 const SCHOOL_NAMES: { [key: number]: string } = {
   1: "竜北中",
@@ -35,14 +228,7 @@ const SCHOOL_NAMES: { [key: number]: string } = {
   6: "雁が音中",
   7: "高岡中",
   8: "富士松中",
-  9: "その他 (使用中止)",
-  10: "東山中",
-  31: "井郷中",
-  32: "猿投台中",
-  33: "藤岡南中",
-  34: "小原中",
-  35: "藤岡中",
-  99: "その他の学校"
+  9: "その他中学"
 };
 
 const GRADE_NAMES: { [key: number]: string } = {
@@ -51,7 +237,7 @@ const GRADE_NAMES: { [key: number]: string } = {
   7: "中学1年生"
 };
 
-const LessonProgressManagement = () => {
+const LessonProgressManagement: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [studentName, setStudentName] = useState<string>('');
@@ -61,7 +247,11 @@ const LessonProgressManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
   const [showScrollButton, setShowScrollButton] = useState<boolean>(false);
+  
+  // コメント表示のための状態
+  const [showCommentSection, setShowCommentSection] = useState<boolean>(false);
 
+  // スクロールボタンの処理
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollButton(window.scrollY > 400);
@@ -71,6 +261,7 @@ const LessonProgressManagement = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Bomb Countの取得
   const fetchBombCount = async (studentId: number): Promise<number> => {
     try {
       const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_get_bomb_count.php?student_id=${studentId}`);
@@ -86,46 +277,46 @@ const LessonProgressManagement = () => {
   };
 
   // bombカウントの監視用Effect
-// bombカウントの監視用Effect
-useEffect(() => {
-  const handleBombCount = async () => {
-    if (progressParams?.bombCount === 3) {
-      try {
-        const response = await fetch('/api/send-warning-mail', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            studentName: studentName,
-            schoolName: SCHOOL_NAMES[progressParams.schoolId],
-            gradeName: GRADE_NAMES[progressParams.gradeId],
-            bombCount: progressParams.bombCount,
-            studentId: progressParams.studentId
-          }),
-        });
+  useEffect(() => {
+    const handleBombCount = async () => {
+      if (progressParams?.bombCount === 3) {
+        try {
+          const response = await fetch('/api/send-warning-mail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              studentName: studentName,
+              schoolName: SCHOOL_NAMES[progressParams.schoolId],
+              gradeName: GRADE_NAMES[progressParams.gradeId],
+              bombCount: progressParams.bombCount,
+              studentId: progressParams.studentId
+            }),
+          });
 
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error);
+          const data = await response.json();
+          if (!data.success) {
+            throw new Error(data.error);
+          }
+
+          // メール送信成功後にbombCountを再取得して表示を更新
+          const newBombCount = await fetchBombCount(progressParams.studentId);
+          setProgressParams(prev => prev ? {
+            ...prev,
+            bombCount: newBombCount
+          } : null);
+
+        } catch (error) {
+          console.error('警告メール送信エラー:', error);
         }
-
-        // メール送信成功後にbombCountを再取得して表示を更新
-        const newBombCount = await fetchBombCount(progressParams.studentId);
-        setProgressParams(prev => prev ? {
-          ...prev,
-          bombCount: newBombCount
-        } : null);
-
-      } catch (error) {
-        console.error('警告メール送信エラー:', error);
       }
-    }
-  };
+    };
 
-  handleBombCount();
-}, [progressParams?.bombCount, studentName, progressParams]);
+    handleBombCount();
+  }, [progressParams?.bombCount, studentName, progressParams]);
 
+  // 初期化処理
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -197,7 +388,7 @@ useEffect(() => {
     }
   };
 
-  const fetchTeacherName = async (teacherId: number) => {
+  const fetchTeacherName = async (teacherId: number): Promise<void> => {
     try {
       const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/statement_get_teacher_name.php?user_id=${teacherId}`);
       const data = await response.json();
@@ -212,16 +403,21 @@ useEffect(() => {
     }
   };
 
-  const handlePrint = () => {
+  const handlePrint = (): void => {
     window.print();
   };
 
-  const handleExport = () => {
+  const handleExport = (): void => {
     // 将来的なCSV出力機能のための準備
   };
 
-  const scrollToTop = () => {
+  const scrollToTop = (): void => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // コメント表示切り替え
+  const toggleCommentSection = (): void => {
+    setShowCommentSection(!showCommentSection);
   };
 
   if (loading) {
@@ -329,13 +525,15 @@ useEffect(() => {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-4 mb-2">
-                <Image
-                  src={`/images/${progressParams?.gender === 'male' ? 'study_boy.png' : 'study_girl.png'}`}
-                  alt="Student icon"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
+                {progressParams && (
+                  <Image
+                    src={`/images/${progressParams.gender === 'male' ? 'study_boy.png' : 'study_girl.png'}`}
+                    alt="Student icon"
+                    width={32}
+                    height={32}
+                    className="object-contain"
+                  />
+                )}
                 <h1 className="text-xl font-bold flex items-center gap-3">
                   <span className="text-2xl" style={{ color: '#4AC0B9' }}>
                     {studentName}
@@ -344,87 +542,40 @@ useEffect(() => {
                 </h1>
               </div>
 
-
-
-{/* テスト成績管理ボタン (現在無効化中) */}
-{/*
-<div className="mt-4">
-  <Link 
-    href={`/test-scores?${new URLSearchParams({
-      student: studentName,
-      id: progressParams?.studentId.toString() || '',
-      api_key: searchParams.get('api_key') || '',
-      user: searchParams.get('user') || '',
-      school_id: progressParams?.schoolId.toString() || '',
-      grade_id: progressParams?.gradeId.toString() || '',
-      student_id: progressParams?.studentId.toString() || '',
-      gender: progressParams?.gender || ''
-    }).toString()}`}
-    className="inline-flex items-center px-4 py-2 bg-[#4AC0B9] text-white rounded-lg 
-      hover:bg-[#3DA8A2] transition-colors duration-200"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <FaClipboardList className="mr-2" />
-    テスト成績管理
-  </Link>
-</div>
-*/}
-{/* テスト成績管理ボタン (現在無効化中) */}
-{/*
-<div className="mt-4">
-  <Link 
-    href={`/test-scores?${new URLSearchParams({
-      student: studentName,
-      id: progressParams?.studentId.toString() || '',
-      api_key: searchParams.get('api_key') || '',
-      user: searchParams.get('user') || '',
-      school_id: progressParams?.schoolId.toString() || '',
-      grade_id: progressParams?.gradeId.toString() || '',
-      student_id: progressParams?.studentId.toString() || '',
-      gender: progressParams?.gender || ''
-    }).toString()}`}
-    className="inline-flex items-center px-4 py-2 bg-[#4AC0B9] text-white rounded-lg 
-      hover:bg-[#3DA8A2] transition-colors duration-200"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <FaClipboardList className="mr-2" />
-    テスト成績管理
-  </Link>
-</div>
-*/}
-
-{/* 準備中を一体化したボタン */}
-<div className="mt-4">
-  <button
-    disabled
-    className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 border border-gray-300 
-      rounded-lg cursor-not-allowed shadow-sm relative overflow-hidden"
-  >
-    <div className="flex items-center">
-      <FaClipboardList className="mr-2 text-gray-500" />
-      <span>テスト成績管理</span>
-    </div>
-    
-    {/* 角度をつけたリボン */}
-    <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-800 py-0.5 px-3 
-      text-xs font-bold shadow-sm transform translate-x-2 -translate-y-0.5 rotate-12">
-      <div className="flex items-center">
-        <span role="img" aria-label="工事中" className="mr-1">🔧</span>
-        準備中
-      </div>
-    </div>
-  </button>
-
-  {/* 補足説明テキスト */}
-  <p className="text-xs text-gray-500 mt-1 ml-1">
-    テスト成績管理機能は現在開発中です。もうしばらくお待ちください。
-  </p>
-</div>
-
-
-
+              <div className="mt-4">
+                {progressParams && (
+                  <Link 
+                    href={`/test-scores?${new URLSearchParams({
+                      student: studentName,
+                      id: progressParams.studentId.toString(),
+                      api_key: searchParams.get('api_key') || '',
+                      user: searchParams.get('user') || '',
+                      school_id: progressParams.schoolId.toString(),
+                      grade_id: progressParams.gradeId.toString(),
+                      student_id: progressParams.studentId.toString(),
+                      gender: progressParams.gender
+                    }).toString()}`}
+                    className="inline-flex items-center px-4 py-2 bg-[#4AC0B9] text-white rounded-lg 
+                      hover:bg-[#3DA8A2] transition-colors duration-200"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <FaClipboardList className="mr-2" />
+                    テスト成績管理
+                  </Link>
+                )}
+                
+                {/* コメント表示切り替えボタン */}
+                <button 
+                  onClick={toggleCommentSection}
+                  className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg 
+                    hover:bg-blue-600 transition-colors duration-200 ml-4"
+                >
+                  <FaComments className="mr-2" />
+                  {showCommentSection ? 'コメント履歴を隠す' : 'コメント履歴を表示'}
+                </button>
+              </div>
+              
               <div className="flex items-center gap-4 text-sm text-gray-500 mt-4">
                 {progressParams && (
                   <>
@@ -439,14 +590,14 @@ useEffect(() => {
                     </div>
                     <div className="h-4 w-px bg-gray-300" />
                     <div className="flex items-center">
-  <FaExclamationTriangle 
-    className={`mr-2 ${progressParams?.bombCount ? 'text-yellow-500' : 'text-gray-400'}`} 
-  />
-  <span className={progressParams?.bombCount && progressParams.bombCount >= 2 ? 'text-red-500 font-medium' : ''}>
-    イエローカード: {progressParams?.bombCount ?? 0}/3枚
-    {progressParams?.bombCount && progressParams.bombCount >= 2 && ' (要注意)'}
-  </span>
-</div>
+                      <FaExclamationTriangle 
+                        className={`mr-2 ${progressParams.bombCount ? 'text-yellow-500' : 'text-gray-400'}`} 
+                      />
+                      <span className={progressParams.bombCount && progressParams.bombCount >= 2 ? 'text-red-500 font-medium' : ''}>
+                        イエローカード: {progressParams.bombCount ?? 0}/3枚
+                        {progressParams.bombCount && progressParams.bombCount >= 2 && ' (要注意)'}
+                      </span>
+                    </div>
                   </>
                 )}
               </div>
@@ -483,6 +634,25 @@ useEffect(() => {
             </div>
           </div>
         </div>
+
+        {/* 生徒学習指示セクション */}
+        {progressParams && (
+          <InlineStudentInstruction 
+            studentId={progressParams.studentId}
+          />
+        )}
+
+        {/* コメント履歴セクション */}
+        {showCommentSection && progressParams && (
+          <StudentCommentsView
+            studentId={progressParams.studentId}
+            studentName={studentName}
+            schoolId={progressParams.schoolId}
+            schoolName={SCHOOL_NAMES[progressParams.schoolId]}
+            gradeId={progressParams.gradeId}
+            gradeName={GRADE_NAMES[progressParams.gradeId]}
+          />
+        )}
 
         {progressParams && (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">

@@ -133,6 +133,27 @@ export default function ProgressTableView({
     }
   };
 
+  // handleUnitCompletion 関数の後に追加
+const handleCancelCompletion = async (unitOrderId: number) => {
+  const item = data.find(p => p.unit_order_id === unitOrderId);
+  if (!item) return;
+
+  const confirmation = window.confirm(
+    `この単元の完了を取り消しますか？\n` +
+    `単元: ${item.unit_name}\n` +
+    `完了日: ${formatDate(item.completion_date)}\n` +
+    `担当講師: ${item.teacher_name}`
+  );
+  
+  if (confirmation) {
+    await onProgressUpdate(unitOrderId, {
+      completion_date: null,
+      teacher_id: null,
+      teacher_name: null
+    });
+  }
+};
+
   const handleHomeworkToggle = async (unitOrderId: number) => {
     const item = data.find(p => p.unit_order_id === unitOrderId);
     if (item) {
@@ -255,31 +276,44 @@ export default function ProgressTableView({
           key={item.unit_order_id} 
           className={`${item.isTestRange ? "bg-yellow-50" : "bg-white"} hover:bg-gray-50`}
         >
-          <td className="py-2 px-2 border-b text-center w-16">
-            <button 
-              onClick={() => handleUnitCompletion(item.unit_order_id)}
-              className="hover:scale-110 transition-transform duration-200 inline-flex justify-center w-full"
-              disabled={isUpdating(item.unit_order_id)}
-            >
-              {isUpdating(item.unit_order_id) ? (
-                <FaSpinner className="animate-spin w-6 h-6 text-gray-400" />
-              ) : (
-                <FaCheckCircle 
-                  className={`${
-                    item.completion_date && item.teacher_name 
-                      ? "text-green-500" 
-                      : "text-gray-300"
-                  } w-6 h-6`} 
-                />
-              )}
-            </button>
-          </td>
+   <td className="py-2 px-2 border-b text-center sticky left-0 bg-inherit z-10">
+  {item.completion_date && item.teacher_name ? (
+    // 完了済みの場合は取り消しボタンを表示
+    <div className="flex flex-col items-center gap-1">
+      <FaCheckCircle className="text-green-500 w-6 h-6" />
+      <button
+        onClick={() => handleCancelCompletion(item.unit_order_id)}
+        className="text-xs text-red-500 hover:text-red-700 underline"
+        disabled={isUpdating(item.unit_order_id)}
+      >
+        {isUpdating(item.unit_order_id) ? (
+          <FaSpinner className="animate-spin w-3 h-3 mx-auto" />
+        ) : (
+          "取消"
+        )}
+      </button>
+    </div>
+  ) : (
+    // 未完了の場合は完了ボタンのみ表示
+    <button 
+      onClick={() => handleUnitCompletion(item.unit_order_id)}
+      className="hover:scale-110 transition-transform duration-200 inline-flex justify-center w-full"
+      disabled={isUpdating(item.unit_order_id)}
+    >
+      {isUpdating(item.unit_order_id) ? (
+        <FaSpinner className="animate-spin w-6 h-6 text-gray-400" />
+      ) : (
+        <FaCheckCircle className="text-gray-300 w-6 h-6" />
+      )}
+    </button>
+  )}
+</td>
 
-          <td className="py-2 px-2 border-b text-center w-16">
+          <td className="py-2 px-2 border-b text-center">
             {item.number}
           </td>
 
-          <td className="py-2 px-2 border-b whitespace-nowrap">
+          <td className="py-2 px-2 border-b">
             <div className="flex items-center">
               <span className="truncate">
                 {item.unit_name}
@@ -293,7 +327,7 @@ export default function ProgressTableView({
             </div>
           </td>
 
-          <td className="py-2 px-2 border-b text-center w-16">
+          <td className="py-2 px-2 border-b text-center">
             <button
               onClick={() => handleSchoolComplete(item.unit_order_id)}
               className="hover:scale-110 transition-transform duration-200 inline-flex justify-center w-full"
@@ -309,19 +343,19 @@ export default function ProgressTableView({
             </button>
           </td>
 
-          <td className="py-2 px-2 border-b w-20 text-center whitespace-nowrap">
+          <td className="py-2 px-2 border-b text-center whitespace-nowrap">
             <span className={item.completion_date && item.teacher_id ? "text-green-500" : "text-gray-700"}>
               {formatDate(item.completion_date)}
             </span>
           </td>
 
-          <td className="py-2 px-2 border-b w-32">
+          <td className="py-2 px-2 border-b">
             <span className={item.completion_date && item.teacher_name ? "text-green-500" : "text-gray-700"}>
               {item.teacher_name || ''}
             </span>
           </td>
 
-          <td className="py-2 px-2 border-b text-center w-24">
+          <td className="py-2 px-2 border-b text-center">
             <div className="flex justify-center">
               <Switch
                 checked={item.homework_assigned}
@@ -342,7 +376,7 @@ export default function ProgressTableView({
             </div>
           </td>
 
-          <td className="py-2 px-2 border-b text-center w-[150px]">
+          <td className="py-2 px-2 border-b text-center">
             {item.homework_assigned && item.ct_status === "未実施" ? (
               <div className="flex justify-center space-x-2">
                 <button
@@ -362,85 +396,85 @@ export default function ProgressTableView({
                   disabled={isUpdating(item.unit_order_id)}
                 >
                   {isUpdating(item.unit_order_id) ? (
-               <FaSpinner className="animate-spin w-4 h-4" />
-              ) : (
-                "不合格"
-              )}
-            </button>
-          </div>
-        ) : (
-          <>
-            {item.ct_status === "合格" && (
-              <FaThumbsUp className="text-green-500 mx-auto w-5 h-5" />
+                    <FaSpinner className="animate-spin w-4 h-4" />
+                  ) : (
+                    "不合格"
+                  )}
+                </button>
+              </div>
+            ) : (
+              <>
+                {item.ct_status === "合格" && (
+                  <FaThumbsUp className="text-green-500 mx-auto w-5 h-5" />
+                )}
+                {item.ct_status === "不合格" && (
+                  <FaThumbsDown className="text-red-500 mx-auto w-5 h-5" />
+                )}
+              </>
             )}
-            {item.ct_status === "不合格" && (
-              <FaThumbsDown className="text-red-500 mx-auto w-5 h-5" />
-            )}
-          </>
-        )}
-      </td>
+          </td>
 
-      <td className="py-2 px-2 border-b text-center w-[150px]">
-        {item.ct_status === "不合格" && item.homework_status === "未チェック" ? (
-          <div className="flex justify-center space-x-2">
-            <button
-              className="bg-green-500 hover:bg-green-600 text-white p-2 rounded disabled:opacity-50"
-              onClick={() => handleHomeworkCheck(item.unit_order_id, "やってきている")}
-              disabled={isUpdating(item.unit_order_id)}
-            >
-              {isUpdating(item.unit_order_id) ? (
-                <FaSpinner className="animate-spin w-4 h-4" />
-              ) : (
-                <FaHeart className="text-white w-4 h-4" />
-              )}
-            </button>
-            <button
-              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded disabled:opacity-50"
-              onClick={() => handleHomeworkCheck(item.unit_order_id, "やってきていない")}
-              disabled={isUpdating(item.unit_order_id)}
-            >
-              {isUpdating(item.unit_order_id) ? (
-                <FaSpinner className="animate-spin w-4 h-4" />
-              ) : (
-                <FaHeartBroken className="text-white w-4 h-4" />
-              )}
-            </button>
-          </div>
-        ) : (
-          <>
-            {item.homework_status === "やってきている" && (
-              <FaHeart className="text-green-500 mx-auto w-5 h-5" />
+          <td className="py-2 px-2 border-b text-center">
+            {item.ct_status === "不合格" && item.homework_status === "未チェック" ? (
+              <div className="flex justify-center space-x-2">
+                <button
+                  className="bg-green-500 hover:bg-green-600 text-white p-2 rounded disabled:opacity-50"
+                  onClick={() => handleHomeworkCheck(item.unit_order_id, "やってきている")}
+                  disabled={isUpdating(item.unit_order_id)}
+                >
+                  {isUpdating(item.unit_order_id) ? (
+                    <FaSpinner className="animate-spin w-4 h-4" />
+                  ) : (
+                    <FaHeart className="text-white w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  className="bg-red-500 hover:bg-red-600 text-white p-2 rounded disabled:opacity-50"
+                  onClick={() => handleHomeworkCheck(item.unit_order_id, "やってきていない")}
+                  disabled={isUpdating(item.unit_order_id)}
+                >
+                  {isUpdating(item.unit_order_id) ? (
+                    <FaSpinner className="animate-spin w-4 h-4" />
+                  ) : (
+                    <FaHeartBroken className="text-white w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <>
+                {item.homework_status === "やってきている" && (
+                  <FaHeart className="text-green-500 mx-auto w-5 h-5" />
+                )}
+                {item.homework_status === "やってきていない" && (
+                  <FaHeartBroken className="text-red-500 mx-auto w-5 h-5" />
+                )}
+              </>
             )}
-            {item.homework_status === "やってきていない" && (
-              <FaHeartBroken className="text-red-500 mx-auto w-5 h-5" />
-            )}
-          </>
-        )}
-      </td>
+          </td>
 
-      <td className="py-2 px-2 border-b text-center w-20">
-        {(item.ct_status !== "未実施" || 
-          item.homework_status !== "未チェック" || 
-          item.homework_assigned) && (
-            <button
-              onClick={() => handleCtHomeworkReset(item.unit_order_id)}
-              className="hover:bg-gray-100 text-gray-600 hover:text-red-500 p-1.5 rounded-full transition-colors duration-200"
-              title="C/Tと宿題の記録をリセット"
-              disabled={isUpdating(item.unit_order_id)}
-            >
-              {isUpdating(item.unit_order_id) ? (
-                <FaSpinner className="animate-spin w-4 h-4" />
-              ) : (
-                <div className="flex items-center space-x-0.5">
-                  <FaHistory className="w-4 h-4" />
-                  <FaExclamationTriangle className="w-2.5 h-2.5 text-amber-500" />
-                </div>
-              )}
-            </button>
-        )}
-      </td>
-    </tr>
-  ))}
-</>
-);
+          <td className="py-2 px-2 border-b text-center">
+            {(item.ct_status !== "未実施" || 
+              item.homework_status !== "未チェック" || 
+              item.homework_assigned) && (
+                <button
+                  onClick={() => handleCtHomeworkReset(item.unit_order_id)}
+                  className="hover:bg-gray-100 text-gray-600 hover:text-red-500 p-1.5 rounded-full transition-colors duration-200"
+                  title="C/Tと宿題の記録をリセット"
+                  disabled={isUpdating(item.unit_order_id)}
+                >
+                  {isUpdating(item.unit_order_id) ? (
+                    <FaSpinner className="animate-spin w-4 h-4" />
+                  ) : (
+                    <div className="flex items-center space-x-0.5">
+                      <FaHistory className="w-4 h-4" />
+                      <FaExclamationTriangle className="w-2.5 h-2.5 text-amber-500" />
+                    </div>
+                  )}
+                </button>
+            )}
+          </td>
+        </tr>
+      ))}
+    </>
+  );
 }

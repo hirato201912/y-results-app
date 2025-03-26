@@ -23,9 +23,16 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ studentName }) => {
     fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_fetch_all_progress.php?apiKey=${apiKey}&studentName=${studentName}`)
       .then(response => response.json())
       .then(data => {
-        setProgressData(data.progress);
+        if (data && data.progress) {
+          setProgressData(data.progress);
+        } else {
+          setProgressData([]);
+        }
       })
-      .catch(error => console.error('Error fetching progress data:', error));
+      .catch(error => {
+        console.error('Error fetching progress data:', error);
+        setProgressData([]);
+      });
   }, [studentName]);
 
   return (

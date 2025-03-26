@@ -163,7 +163,7 @@ const StudentCommentsPanel: React.FC<StudentCommentsPanelProps> = ({
       <div className="px-4 pt-4">
         <CommentSearchFilter 
           onSearch={handleSearch} 
-          placeholder="コメント内容や講師名で検索..." 
+        placeholder="コメント内容・講師名・科目名で検索..."
         />
       </div>
 

@@ -1,16 +1,11 @@
-import { 
-  FaHeart, 
-  FaHeartBroken, 
-  FaThumbsUp, 
-  FaThumbsDown, 
-  FaBook, 
-  FaBookOpen,
-  FaCheckCircle,
-  FaSpinner,
-  FaHistory,
-  FaExclamationTriangle
-} from "react-icons/fa";
-import { Switch } from "@headlessui/react";
+'use client';
+
+import { useState, useEffect, useCallback } from "react";
+import { FaHistory } from 'react-icons/fa';
+import ProgressTableView from './ProgressTableView';
+import { Toast } from './Toast';
+import SubjectTagInput from './SubjectTagInput';
+import SubjectGuidelines from './SubjectGuidelines'; // コンポーネント名修正
 
 interface Progress {
   unit_id: number;
@@ -26,20 +21,22 @@ interface Progress {
   homework_assigned: boolean;
   ct_status: "未実施" | "合格" | "不合格";
   homework_status: "未チェック" | "やってきている" | "やってきていない";
+  level_id: number;
   duplicate_number: number;
-  student_id?: number;
 }
 
-interface ProgressTableViewProps {
-  data: Progress[];
-  loading: boolean;
-  updatingItems: number[];
-  onProgressUpdate: (unitOrderId: number, updateData: Partial<Progress>) => Promise<void>;
+interface LessonProgressTableProps {
   teacherName: string;
   teacherId: number;
+  schoolId: number;
+  gradeId: number;
   studentId: number;
-  showToast: (message: string, type: 'success' | 'error' | 'warning') => void;
-  onBombCountUpdate?: (count: number) => void;
+}
+
+interface ToastState {
+  show: boolean;
+  message: string;
+  type: 'success' | 'error' | 'warning';
 }
 
 const SCHOOL_NAMES: { [key: number]: string } = {
@@ -60,421 +57,373 @@ const GRADE_NAMES: { [key: number]: string } = {
   7: "中学1年生"
 };
 
-export default function ProgressTableView({
-  data,
-  loading,
-  updatingItems,
-  onProgressUpdate,
-  teacherName,
-  teacherId,
-  studentId,
-  showToast,
-  onBombCountUpdate
-}: ProgressTableViewProps) {
-  const isUpdating = (unitOrderId: number) => updatingItems.includes(unitOrderId);
-
-  const handleSchoolComplete = async (unitOrderId: number) => {
-    const item = data.find(p => p.unit_order_id === unitOrderId);
-    if (item) {
-      await onProgressUpdate(unitOrderId, {
-        is_school_completed: !item.is_school_completed
-      });
-    }
+// レベルインジケーターコンポーネント
+const LevelIndicator = ({ level_id }: { level_id: number }) => {
+  const levelConfig = {
+    1: { name: '基礎', bgColor: 'bg-red-500', textColor: 'text-white' },
+    2: { name: '標準', bgColor: 'bg-yellow-500', textColor: 'text-gray-800' },
+    3: { name: '発展', bgColor: 'bg-blue-500', textColor: 'text-white' }
   };
 
-  const formatDate = (dateString: string | null): string => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    } catch {
-      return '';
-    }
-  };
-
-  const handleCtHomeworkReset = async (unitOrderId: number) => {
-    const item = data.find(p => p.unit_order_id === unitOrderId);
-    if (!item) return;
-
-    const confirmation = window.confirm(
-      `以下の記録を取消しますか？\n\n` +
-      `単元: ${item.unit_name}\n` +
-      `現在の状態:\n` +
-      `C/T: ${item.ct_status}\n` +
-      `宿題状況: ${item.homework_status}\n\n` +
-      `※C/Tと宿題の記録のみ取消しされます`
-    );
-
-    if (confirmation) {
-      await onProgressUpdate(unitOrderId, {
-        ct_status: "未実施",
-        homework_status: "未チェック",
-        homework_assigned: false
-      });
-    }
-  };
-
-  const handleUnitCompletion = async (unitOrderId: number) => {
-    const item = data.find(p => p.unit_order_id === unitOrderId);
-    if (item && (!item.completion_date || !item.teacher_name)) {
-      const confirmation = window.confirm(
-        `講師名: ${teacherName}\n` +
-        `この単元を完了にしますか？`
-      );
-      
-      if (confirmation) {
-        const today = new Date().toISOString().split('T')[0];
-        await onProgressUpdate(unitOrderId, {
-          completion_date: today,
-          teacher_id: teacherId,
-          teacher_name: teacherName
-        });
-      }
-    }
-  };
-
-  // handleUnitCompletion 関数の後に追加
-const handleCancelCompletion = async (unitOrderId: number) => {
-  const item = data.find(p => p.unit_order_id === unitOrderId);
-  if (!item) return;
-
-  const confirmation = window.confirm(
-    `この単元の完了を取り消しますか？\n` +
-    `単元: ${item.unit_name}\n` +
-    `完了日: ${formatDate(item.completion_date)}\n` +
-    `担当講師: ${item.teacher_name}`
-  );
-  
-  if (confirmation) {
-    await onProgressUpdate(unitOrderId, {
-      completion_date: null,
-      teacher_id: null,
-      teacher_name: null
-    });
-  }
-};
-
-  const handleHomeworkToggle = async (unitOrderId: number) => {
-    const item = data.find(p => p.unit_order_id === unitOrderId);
-    if (item) {
-      await onProgressUpdate(unitOrderId, {
-        homework_assigned: !item.homework_assigned
-      });
-    }
-  };
-
-  const handleCtAction = async (unitOrderId: number, status: "未実施" | "合格" | "不合格") => {
-    const item = data.find(p => p.unit_order_id === unitOrderId);
-    if (item) {
-      await onProgressUpdate(unitOrderId, {
-        ct_status: status,
-        homework_assigned: false
-      });
-    }
-  };
-
-  const handleHomeworkCheck = async (unitOrderId: number, status: "未チェック" | "やってきている" | "やってきていない") => {
-    try {
-      // 1. 進捗の更新
-      await onProgressUpdate(unitOrderId, { homework_status: status });
-
-      // やってきていない場合のみイエローカード処理
-      if (status === "やってきていない") {
-        try {
-          // 2. bomb countを更新
-          const updateBombResponse = await fetch(
-            'https://mikawayatsuhashi.sakura.ne.jp/y_update_bomb_count.php',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                student_id: studentId
-              })
-            }
-          );
-
-          if (!updateBombResponse.ok) {
-            throw new Error('イエローカードの更新に失敗しました');
-          }
-
-          const updateBombResult = await updateBombResponse.json();
-
-          if (!updateBombResult.success) {
-            throw new Error(updateBombResult.error || 'イエローカードの更新に失敗しました');
-          }
-
-          // 親コンポーネントのbomb countを更新
-          if (onBombCountUpdate) {
-            onBombCountUpdate(updateBombResult.bombCount);
-          }
-
-          // 2枚目から3枚目になったときのみメール送信
-          if (updateBombResult.previousBombCount === 2 && updateBombResult.bombCount === 0) {
-            try {
-              const emailResponse = await fetch('/api/send-warning-mail', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  studentName: updateBombResult.studentName,
-                  schoolName: SCHOOL_NAMES[updateBombResult.schoolId],
-                  gradeName: GRADE_NAMES[updateBombResult.gradeId],
-                  bombCount: 3,
-                  studentId: studentId
-                }),
-              });
-
-              if (!emailResponse.ok) {
-                throw new Error('警告メールの送信に失敗しました');
-              }
-
-              const emailResult = await emailResponse.json();
-              if (!emailResult.success) {
-                throw new Error(emailResult.error || '警告メールの送信に失敗しました');
-              }
-
-              showToast('イエローカードが3枚になりました。担当者にメールで通知しました。', 'warning');
-            } catch (emailError) {
-              console.error('Failed to send warning email:', emailError);
-              showToast('イエローカードが3枚になりました。メール通知に失敗しました。', 'error');
-            }
-          } else {
-            // 通常の更新時
-            showToast(`イエローカード: ${updateBombResult.bombCount}枚`, 'warning');
-          }
-        } catch (error) {
-          console.error('Bomb count update error:', error);
-          showToast(error instanceof Error ? error.message : 'イエローカードの更新に失敗しました', 'error');
-        }
-      }
-    } catch (error) {
-      console.error('Error handling homework check:', error);
-      showToast(error instanceof Error ? error.message : '処理に失敗しました', 'error');
-    }
-  };
-
-  if (loading) {
-    return (
-      <tr>
-        <td colSpan={10} className="text-center py-4">
-          <div className="flex justify-center items-center">
-            <FaSpinner className="animate-spin h-8 w-8 text-blue-500" />
-            <span className="ml-2">読み込み中...</span>
-          </div>
-        </td>
-      </tr>
-    );
-  }
+  const config = levelConfig[level_id as keyof typeof levelConfig] || levelConfig[2];
 
   return (
-    <>
-      {data.map((item) => (
-        <tr 
-          key={item.unit_order_id} 
-          className={`${item.isTestRange ? "bg-yellow-50" : "bg-white"} hover:bg-gray-50`}
-        >
-   <td className="py-2 px-2 border-b text-center sticky left-0 bg-inherit z-10">
-  {item.completion_date && item.teacher_name ? (
-    // 完了済みの場合は取り消しボタンを表示
-    <div className="flex flex-col items-center gap-1">
-      <FaCheckCircle className="text-green-500 w-6 h-6" />
-      <button
-        onClick={() => handleCancelCompletion(item.unit_order_id)}
-        className="text-xs text-red-500 hover:text-red-700 underline"
-        disabled={isUpdating(item.unit_order_id)}
-      >
-        {isUpdating(item.unit_order_id) ? (
-          <FaSpinner className="animate-spin w-3 h-3 mx-auto" />
-        ) : (
-          "取消"
-        )}
-      </button>
+    <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${config.bgColor} ${config.textColor} text-sm font-medium`}>
+      <span className="w-2 h-2 rounded-full bg-current" />
+      {config.name}レベル
     </div>
-  ) : (
-    // 未完了の場合は完了ボタンのみ表示
-    <button 
-      onClick={() => handleUnitCompletion(item.unit_order_id)}
-      className="hover:scale-110 transition-transform duration-200 inline-flex justify-center w-full"
-      disabled={isUpdating(item.unit_order_id)}
-    >
-      {isUpdating(item.unit_order_id) ? (
-        <FaSpinner className="animate-spin w-6 h-6 text-gray-400" />
-      ) : (
-        <FaCheckCircle className="text-gray-300 w-6 h-6" />
-      )}
-    </button>
-  )}
-</td>
+  );
+};
 
-          <td className="py-2 px-2 border-b text-center">
-            {item.number}
-          </td>
+function LessonProgressTable({ 
+  teacherName,
+  teacherId,
+  schoolId,
+  gradeId,
+  studentId
+}: LessonProgressTableProps) {
+  const [activeTab, setActiveTab] = useState("英語");
+  const [progressData, setProgressData] = useState<Progress[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [updatingItems, setUpdatingItems] = useState<number[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [comment, setComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [bombCount, setBombCount] = useState<number>(0);
+  const [toast, setToast] = useState<ToastState>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
-          <td className="py-2 px-2 border-b">
-            <div className="flex items-center">
-              <span className="truncate">
-                {item.unit_name}
-                {item.duplicate_number > 0 && ` (${item.duplicate_number + 1}回目)`}
-              </span>
-              {item.isTestRange && (
-                <span className="ml-2 text-xs bg-yellow-300 text-yellow-800 px-2 py-1 rounded-full shrink-0">
-                  テスト範囲
-                </span>
-              )}
-            </div>
-          </td>
+  // トースト表示関数
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({
+      show: true,
+      message,
+      type
+    });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 3000);
+  }, []);
 
-          <td className="py-2 px-2 border-b text-center">
-            <button
-              onClick={() => handleSchoolComplete(item.unit_order_id)}
-              className="hover:scale-110 transition-transform duration-200 inline-flex justify-center w-full"
-              disabled={isUpdating(item.unit_order_id)}
-            >
-              {isUpdating(item.unit_order_id) ? (
-                <FaSpinner className="animate-spin w-5 h-5 text-gray-400" />
-              ) : item.is_school_completed ? (
-                <FaBookOpen className="text-blue-500 w-5 h-5" />
-              ) : (
-                <FaBook className="text-gray-400 w-5 h-5" />
-              )}
-            </button>
-          </td>
+  // コメント送信処理
+  const handleCommentSubmit = async (message: string) => {
+    if (!message.trim() || isSubmittingComment) return;
 
-          <td className="py-2 px-2 border-b text-center whitespace-nowrap">
-            <span className={item.completion_date && item.teacher_id ? "text-green-500" : "text-gray-700"}>
-              {formatDate(item.completion_date)}
-            </span>
-          </td>
+    try {
+      setIsSubmittingComment(true);
 
-          <td className="py-2 px-2 border-b">
-            <span className={item.completion_date && item.teacher_name ? "text-green-500" : "text-gray-700"}>
-              {item.teacher_name || ''}
-            </span>
-          </td>
+      const response = await fetch('https://mikawayatsuhashi.sakura.ne.jp/cr_save_comment.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          teacher_name: teacherName,
+          student_id: studentId
+        }),
+      });
 
-          <td className="py-2 px-2 border-b text-center">
-            <div className="flex justify-center">
-              <Switch
-                checked={item.homework_assigned}
-                onChange={() => handleHomeworkToggle(item.unit_order_id)}
-                disabled={isUpdating(item.unit_order_id)}
-                className={`${
-                  item.homework_assigned ? "bg-blue-500" : "bg-gray-300"
-                } relative inline-flex items-center h-6 rounded-full w-11
-                  ${isUpdating(item.unit_order_id) ? 'opacity-50' : ''}`}
+      if (!response.ok) {
+        throw new Error('コメントの投稿に失敗しました');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        showToast('コメントを投稿しました', 'success');
+        setComment('');
+      } else {
+        throw new Error(result.error || 'コメントの投稿に失敗しました');
+      }
+
+    } catch (error) {
+      console.error('Comment submission error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'エラーが発生しました';
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // bomb countの更新を処理する関数
+  const handleBombCountUpdate = useCallback((newCount: number) => {
+    setBombCount(newCount);
+  }, []);
+
+  // 進捗更新関数
+  const handleProgressUpdate = async (unitOrderId: number, updateData: Partial<Progress>) => {
+    try {
+      setError(null);
+      setUpdatingItems(prev => [...prev, unitOrderId]);
+
+      setProgressData(currentData => 
+        currentData.map(item => 
+          item.unit_order_id === unitOrderId
+            ? {
+                ...item,
+                ...updateData,
+                // 完了取り消しの場合はteacher_idとteacher_nameもnullに
+                ...(updateData.completion_date === null && {
+                  teacher_id: null,
+                  teacher_name: null
+                }),
+                // 完了設定の場合は現在の講師情報を設定
+                ...(updateData.completion_date && updateData.completion_date !== null && {
+                  teacher_id: teacherId,
+                  teacher_name: teacherName
+                })
+              }
+            : item
+        )
+      );
+
+      const requestData = {
+        student_id: studentId,
+        unit_order_id: unitOrderId,
+        teacher_id: teacherId,
+        update_data: updateData
+      };
+
+      const response = await fetch(
+        'https://mikawayatsuhashi.sakura.ne.jp/statement_update_cr_student_progress.php',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || '更新に失敗しました');
+      }
+
+      showToast(
+        updateData.completion_date === null 
+          ? '完了を取り消しました' 
+          : '更新が完了しました', 
+        'success'
+      );
+
+    } catch (error) {
+      console.error('Progress update error:', error);
+      const errorMessage = error instanceof Error ? error.message : '更新に失敗しました';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      
+      await fetchProgressData(activeTab);
+    } finally {
+      setUpdatingItems(prev => prev.filter(id => id !== unitOrderId));
+    }
+  };
+
+  // データ取得関数
+  const fetchProgressData = useCallback(async (subject: string) => {
+    try {
+      setIsInitialLoading(true);
+      setError(null);
+
+      const [progressResponse, bombResponse] = await Promise.all([
+        fetch(
+          `https://mikawayatsuhashi.sakura.ne.jp/statement_get_cr_student_progress.php?` +
+          `student_id=${studentId}&` +
+          `school_id=${schoolId}&` +
+          `grade_id=${gradeId}&` +
+          `subject=${encodeURIComponent(subject)}`
+        ),
+        fetch(
+          `https://mikawayatsuhashi.sakura.ne.jp/cr_get_bomb_count.php?student_id=${studentId}`
+        )
+      ]);
+
+      if (!progressResponse.ok || !bombResponse.ok) {
+        throw new Error('ネットワークエラーが発生しました');
+      }
+
+      const [progressResult, bombResult] = await Promise.all([
+        progressResponse.json(),
+        bombResponse.json()
+      ]);
+
+      if (!progressResult.success) {
+        throw new Error(progressResult.error || 'データの取得に失敗しました');
+      }
+
+      const processedData = progressResult.data.map((item: Progress) => ({
+        ...item,
+        unit_id: Number(item.unit_id),
+        unit_order_id: Number(item.unit_order_id),
+        order_index: Number(item.order_index),
+        isTestRange: Boolean(item.isTestRange),
+        is_school_completed: Boolean(Number(item.is_school_completed)),
+        homework_assigned: Boolean(Number(item.homework_assigned)),
+        teacher_id: item.teacher_id ? Number(item.teacher_id) : null,
+        completion_date: item.completion_date || null,
+        teacher_name: item.teacher_name || null,
+        ct_status: item.ct_status || "未実施",
+        homework_status: item.homework_status || "未チェック",
+        duplicate_number: Number(item.duplicate_number || 0)
+      }));
+
+      setProgressData(processedData);
+      if (bombResult.bombCount !== undefined) {
+        setBombCount(bombResult.bombCount);
+      }
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '予期せぬエラーが発生しました';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsInitialLoading(false);
+    }
+  }, [studentId, schoolId, gradeId, showToast]);
+
+  // 初期データ取得
+  useEffect(() => {
+    fetchProgressData(activeTab);
+  }, [activeTab, fetchProgressData]);
+
+  const subjectColors = {
+    "英語": "bg-red-500 hover:bg-red-600",
+    "数学": "bg-orange-500 hover:bg-orange-600",
+    "理科": "bg-green-500 hover:bg-green-600",
+    "社会": "bg-blue-500 hover:bg-blue-600",
+    "国語": "bg-purple-500 hover:bg-purple-600"
+  } as const;
+
+  return (
+    <div className="container mx-auto p-4">
+      <SubjectTagInput
+        value={comment}
+        onChange={setComment}
+        onSubmit={handleCommentSubmit}
+        isSubmitting={isSubmittingComment}
+        studentId={studentId}
+      />
+      <div className="bg-white shadow-md rounded p-6">
+        <div className="space-y-4">
+          {/* 科目タブ */}
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {Object.entries(subjectColors).map(([subject, colorClass]) => (
+              <button
+                key={subject}
+                onClick={() => setActiveTab(subject)}
+                className={`px-6 py-2 rounded-lg whitespace-nowrap shadow-md hover:shadow-lg
+                  ${
+                    activeTab === subject 
+                      ? `${colorClass} text-white shadow-lg` 
+                      : 'bg-gray-200 hover:bg-gray-300'
+                  } disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200`}
+                disabled={isInitialLoading}
               >
-                <span className="sr-only">Toggle Homework</span>
-                <span
-                  className={`${
-                    item.homework_assigned ? "translate-x-6" : "translate-x-1"
-                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200`}
-                />
-              </Switch>
+                {subject}
+              </button>
+            ))}
+          </div>
+
+
+
+          
+
+          {/* 学習ポイント */}
+         <SubjectGuidelines 
+            activeTab={activeTab}
+            teacherId={teacherId}
+          />
+
+          {/* レベルインジケーター */}
+          {progressData.length > 0 && (
+            <div className="flex items-center gap-3 border-b pb-4">
+              <span className="text-gray-600 font-medium">表示中の単元:</span>
+              <LevelIndicator level_id={progressData[0].level_id} />
             </div>
-          </td>
+          )}
+        </div>
 
-          <td className="py-2 px-2 border-b text-center">
-            {item.homework_assigned && item.ct_status === "未実施" ? (
-              <div className="flex justify-center space-x-2">
-                <button
-                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
-                  onClick={() => handleCtAction(item.unit_order_id, "合格")}
-                  disabled={isUpdating(item.unit_order_id)}
-                >
-                  {isUpdating(item.unit_order_id) ? (
-                    <FaSpinner className="animate-spin w-4 h-4" />
-                  ) : (
-                    "合格"
-                  )}
-                </button>
-                <button
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
-                  onClick={() => handleCtAction(item.unit_order_id, "不合格")}
-                  disabled={isUpdating(item.unit_order_id)}
-                >
-                  {isUpdating(item.unit_order_id) ? (
-                    <FaSpinner className="animate-spin w-4 h-4" />
-                  ) : (
-                    "不合格"
-                  )}
-                </button>
-              </div>
-            ) : (
-              <>
-                {item.ct_status === "合格" && (
-                  <FaThumbsUp className="text-green-500 mx-auto w-5 h-5" />
-                )}
-                {item.ct_status === "不合格" && (
-                  <FaThumbsDown className="text-red-500 mx-auto w-5 h-5" />
-                )}
-              </>
-            )}
-          </td>
 
-          <td className="py-2 px-2 border-b text-center">
-            {item.ct_status === "不合格" && item.homework_status === "未チェック" ? (
-              <div className="flex justify-center space-x-2">
-                <button
-                  className="bg-green-500 hover:bg-green-600 text-white p-2 rounded disabled:opacity-50"
-                  onClick={() => handleHomeworkCheck(item.unit_order_id, "やってきている")}
-                  disabled={isUpdating(item.unit_order_id)}
-                >
-                  {isUpdating(item.unit_order_id) ? (
-                    <FaSpinner className="animate-spin w-4 h-4" />
-                  ) : (
-                    <FaHeart className="text-white w-4 h-4" />
-                  )}
-                </button>
-                <button
-                  className="bg-red-500 hover:bg-red-600 text-white p-2 rounded disabled:opacity-50"
-                  onClick={() => handleHomeworkCheck(item.unit_order_id, "やってきていない")}
-                  disabled={isUpdating(item.unit_order_id)}
-                >
-                  {isUpdating(item.unit_order_id) ? (
-                    <FaSpinner className="animate-spin w-4 h-4" />
-                  ) : (
-                    <FaHeartBroken className="text-white w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            ) : (
-              <>
-                {item.homework_status === "やってきている" && (
-                  <FaHeart className="text-green-500 mx-auto w-5 h-5" />
-                )}
-                {item.homework_status === "やってきていない" && (
-                  <FaHeartBroken className="text-red-500 mx-auto w-5 h-5" />
-                )}
-              </>
-            )}
-          </td>
+{/* 講師への注意書き */}
+<div className="bg-[#4AC0B9]/10 border-l-4 border-[#4AC0B9] p-4 mt-4 mb-2 rounded-md shadow-sm">
+  <div className="flex items-start">
+    <div className="flex-shrink-0">
+      <svg className="h-5 w-5 text-[#4AC0B9] mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+    </div>
+    <div className="ml-3">
+      <div className="text-sm text-[#4AC0B9]">
+        <p>単元の授業が完了したら、必ず<strong>一番左の完了ボタン（チェックマーク）</strong>をクリックしてください。</p>
+      </div>
+    </div>
+  </div>
+</div>
 
-          <td className="py-2 px-2 border-b text-center">
-            {(item.ct_status !== "未実施" || 
-              item.homework_status !== "未チェック" || 
-              item.homework_assigned) && (
-                <button
-                  onClick={() => handleCtHomeworkReset(item.unit_order_id)}
-                  className="hover:bg-gray-100 text-gray-600 hover:text-red-500 p-1.5 rounded-full transition-colors duration-200"
-                  title="C/Tと宿題の記録をリセット"
-                  disabled={isUpdating(item.unit_order_id)}
-                >
-                  {isUpdating(item.unit_order_id) ? (
-                    <FaSpinner className="animate-spin w-4 h-4" />
-                  ) : (
-                    <div className="flex items-center space-x-0.5">
-                      <FaHistory className="w-4 h-4" />
-                      <FaExclamationTriangle className="w-2.5 h-2.5 text-amber-500" />
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded animate-fade-in">
+            {error}
+          </div>
+        )}
+
+        <div className="relative mt-4 overflow-x-auto -mx-4 md:mx-0">
+          {/* min-widthの代わりに単元名を折り返し可能にする */}
+          <div className="pb-4 px-4 md:px-0">
+            <table className="w-full border-separate border-spacing-0 table-fixed">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal sticky left-0 bg-gray-100 z-10 w-16">完了</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-16">番号</th>
+                  <th className="py-3 px-2 text-left border-b text-sm text-gray-900 font-normal">単元</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-16">学校</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-16">日付</th>
+                  <th className="py-3 px-2 text-left border-b text-sm text-gray-900 font-normal w-20">講師</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-20">宿題割当</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-20">C/T</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-20">宿題</th>
+                  <th className="py-3 px-2 text-center border-b text-sm text-gray-900 font-normal w-16">
+                    <div className="flex items-center justify-center space-x-0.5">
+                      <span>取消</span>
                     </div>
-                  )}
-                </button>
-            )}
-          </td>
-        </tr>
-      ))}
-    </>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <ProgressTableView
+                  data={progressData}
+                  loading={isInitialLoading}
+                  updatingItems={updatingItems}
+                  onProgressUpdate={handleProgressUpdate}
+                  teacherName={teacherName}
+                  teacherId={teacherId}
+                  studentId={studentId}
+                  showToast={showToast}
+                  onBombCountUpdate={handleBombCountUpdate}
+                />
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Toast通知 */}
+        {toast.show && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <Toast 
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast(prev => ({ ...prev, show: false }))}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
+
+export default LessonProgressTable;

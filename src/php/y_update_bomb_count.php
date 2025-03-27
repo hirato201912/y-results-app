@@ -61,8 +61,8 @@ try {
         $newBombCount = $currentBomb + 1;
         $isReset = false;
 
-        // bomb countが3に達した場合はリセット
-        if ($newBombCount >= 3) {
+        // bomb countが5に達した場合はリセット
+        if ($newBombCount >= 5) {
             $newBombCount = 0;
             $isReset = true;
         }

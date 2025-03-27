@@ -13,8 +13,8 @@ import {
   FaChevronUp,
   FaBookOpen,
   FaClipboardList,
-  FaExclamationTriangle,
-  FaComments
+  FaComments,
+  FaChartBar // 宿題メーター用のアイコン追加
 } from 'react-icons/fa';
 import LessonProgressTable from './LessonProgressTable';
 import StudentCommentsView from './StudentCommentsView';
@@ -26,7 +26,7 @@ interface ProgressParams {
   studentId: number;
   teacherId: number;
   gender: 'male' | 'female';
-  bombCount?: number;
+  homeworkMeterCount?: number; // bombCountから変更
 }
 
 interface InlineStudentInstructionProps {
@@ -261,25 +261,25 @@ const LessonProgressManagement: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Bomb Countの取得
-  const fetchBombCount = async (studentId: number): Promise<number> => {
+  // 宿題お知らせメーターの取得
+  const fetchHomeworkMeterCount = async (studentId: number): Promise<number> => {
     try {
       const response = await fetch(`https://mikawayatsuhashi.sakura.ne.jp/y_get_bomb_count.php?student_id=${studentId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch bomb count');
+        throw new Error('Failed to fetch homework meter count');
       }
       const data = await response.json();
-      return data.bombCount || 0;
+      return data.bombCount || 0; // APIの戻り値名はまだbombCountのまま
     } catch (error) {
-      console.error('Failed to fetch bomb count:', error);
+      console.error('Failed to fetch homework meter count:', error);
       return 0;
     }
   };
 
-  // bombカウントの監視用Effect
+  // 宿題メーターカウントの監視用Effect
   useEffect(() => {
-    const handleBombCount = async () => {
-      if (progressParams?.bombCount === 3) {
+    const handleHomeworkMeterCount = async () => {
+      if (progressParams?.homeworkMeterCount === 5) { // 上限を5に変更
         try {
           const response = await fetch('/api/send-warning-mail', {
             method: 'POST',
@@ -290,7 +290,7 @@ const LessonProgressManagement: React.FC = () => {
               studentName: studentName,
               schoolName: SCHOOL_NAMES[progressParams.schoolId],
               gradeName: GRADE_NAMES[progressParams.gradeId],
-              bombCount: progressParams.bombCount,
+              homeworkMeterCount: progressParams.homeworkMeterCount,
               studentId: progressParams.studentId
             }),
           });
@@ -300,21 +300,21 @@ const LessonProgressManagement: React.FC = () => {
             throw new Error(data.error);
           }
 
-          // メール送信成功後にbombCountを再取得して表示を更新
-          const newBombCount = await fetchBombCount(progressParams.studentId);
+          // メール送信成功後に宿題メーターを再取得して表示を更新
+          const newHomeworkMeterCount = await fetchHomeworkMeterCount(progressParams.studentId);
           setProgressParams(prev => prev ? {
             ...prev,
-            bombCount: newBombCount
+            homeworkMeterCount: newHomeworkMeterCount
           } : null);
 
         } catch (error) {
-          console.error('警告メール送信エラー:', error);
+          console.error('通知メール送信エラー:', error);
         }
       }
     };
 
-    handleBombCount();
-  }, [progressParams?.bombCount, studentName, progressParams]);
+    handleHomeworkMeterCount();
+  }, [progressParams?.homeworkMeterCount, studentName, progressParams]);
 
   // 初期化処理
   useEffect(() => {
@@ -350,7 +350,7 @@ const LessonProgressManagement: React.FC = () => {
 
         await fetchTeacherName(numericTeacherId);
         
-        const bombCount = await fetchBombCount(numericStudentId);
+        const homeworkMeterCount = await fetchHomeworkMeterCount(numericStudentId);
 
         setProgressParams({
           schoolId: numericSchoolId,
@@ -358,7 +358,7 @@ const LessonProgressManagement: React.FC = () => {
           studentId: numericStudentId,
           teacherId: numericTeacherId,
           gender: gender as 'male' | 'female',
-          bombCount
+          homeworkMeterCount
         });
       } catch (error) {
         setError(error instanceof Error ? error.message : '予期せぬエラーが発生しました');
@@ -577,30 +577,45 @@ const LessonProgressManagement: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-4 text-sm text-gray-500 mt-4">
-                {progressParams && (
-                  <>
-                    <div className="flex items-center">
-                      <FaSchool className="mr-2" />
-                      <span>{SCHOOL_NAMES[progressParams.schoolId]}</span>
-                    </div>
-                    <div className="h-4 w-px bg-gray-300" />
-                    <div className="flex items-center">
-                      <FaGraduationCap className="mr-2" />
-                      <span>{GRADE_NAMES[progressParams.gradeId]}</span>
-                    </div>
-                    <div className="h-4 w-px bg-gray-300" />
-                    <div className="flex items-center">
-                      <FaExclamationTriangle 
-                        className={`mr-2 ${progressParams.bombCount ? 'text-yellow-500' : 'text-gray-400'}`} 
-                      />
-                      <span className={progressParams.bombCount && progressParams.bombCount >= 2 ? 'text-red-500 font-medium' : ''}>
-                        イエローカード: {progressParams.bombCount ?? 0}/3枚
-                        {progressParams.bombCount && progressParams.bombCount >= 2 && ' (要注意)'}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
+  {progressParams && (
+    <>
+      <div className="flex items-center">
+        <FaSchool className="mr-2" />
+        <span>{SCHOOL_NAMES[progressParams.schoolId]}</span>
+      </div>
+      <div className="h-4 w-px bg-gray-300" />
+      <div className="flex items-center">
+        <FaGraduationCap className="mr-2" />
+        <span>{GRADE_NAMES[progressParams.gradeId]}</span>
+      </div>
+      <div className="h-4 w-px bg-gray-300" />
+      <div className="flex items-center">
+        <FaChartBar 
+          className={`mr-2 ${progressParams.homeworkMeterCount ? 'text-red-500' : 'text-gray-400'}`} 
+        />
+        <span className={progressParams.homeworkMeterCount && progressParams.homeworkMeterCount >= 3 ? 'text-red-600 font-medium' : ''}>
+          宿題忘れメーター: 
+          <span className="ml-2 inline-flex items-center">
+            {[...Array(5)].map((_, i) => (
+              <span key={i} className="mx-0.5">
+                {i < (progressParams.homeworkMeterCount || 0) ? 
+                  <span className="inline-block w-4 h-4 bg-red-500 rounded-sm border border-red-600"></span> : 
+                  <span className="inline-block w-4 h-4 bg-gray-200 rounded-sm border border-gray-300"></span>
+                }
+              </span>
+            ))}
+          </span>
+          <span className="ml-2">
+  ({progressParams.homeworkMeterCount || 0}/5)
+</span>
+{progressParams.homeworkMeterCount === 5 && 
+  <div className="mt-1 text-red-600 font-medium ml-6">※塾長へ通知されています</div>
+}
+        </span>
+      </div>
+    </>
+  )}
+</div>
             </div>
 
             <div className="flex gap-3">
@@ -618,7 +633,7 @@ const LessonProgressManagement: React.FC = () => {
               <button
                 onClick={handlePrint}
                 className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 
-                  transition-colors duration-200 flex items-center gap-2"
+                 transition-colors duration-200 flex items-center gap-2"
               >
                 <FaPrint className="w-4 h-4" />
                 <span>印刷</span>

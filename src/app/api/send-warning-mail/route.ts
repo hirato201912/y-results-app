@@ -1,4 +1,3 @@
-//app/api/send-warning-mail/route.ts
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import type { NextRequest } from 'next/server';
@@ -8,7 +7,7 @@ interface WarningMailRequest {
   studentName: string;
   schoolName: string;
   gradeName: string;
-  bombCount: number;
+  homeworkMeterCount: number; // bombCountから変更
   studentId: number;
 }
 
@@ -35,13 +34,13 @@ const createTransporter = () => {
 // メール本文の生成
 const createMailBody = (data: WarningMailRequest) => {
   return `
-宿題未提出が3回に達しましたので、お知らせいたします。
+宿題未提出が5回に達しましたので、お知らせいたします。
 
 ■ 生徒情報
 氏名: ${data.studentName}
 学校: ${data.schoolName}
 学年: ${data.gradeName}
-イエローカード: ${data.bombCount}枚
+宿題忘れメーター: ${data.homeworkMeterCount}/5
 
 ご確認の上、必要な対応をお願い申し上げます。
 
@@ -57,12 +56,12 @@ const validateRequest = (data: any): data is WarningMailRequest => {
     typeof data.studentName === 'string' &&
     typeof data.schoolName === 'string' &&
     typeof data.gradeName === 'string' &&
-    typeof data.bombCount === 'number' &&
+    typeof data.homeworkMeterCount === 'number' && // bombCountから変更
     typeof data.studentId === 'number' &&
     data.studentName.length > 0 &&
     data.schoolName.length > 0 &&
     data.gradeName.length > 0 &&
-    data.bombCount > 0 &&
+    data.homeworkMeterCount > 0 && // bombCountから変更
     data.studentId > 0
   );
 };
@@ -90,7 +89,7 @@ export async function POST(request: NextRequest) {
     const mailOptions = {
       from: MAIL_CONFIG.from,
       to: MAIL_CONFIG.to,
-      subject: '【警告】生徒の宿題未提出',
+      subject: '【通知】生徒の宿題未提出', // 「警告」から「通知」に変更
       text: createMailBody(data),
     };
 
@@ -100,14 +99,14 @@ export async function POST(request: NextRequest) {
     // 成功レスポンス
     return NextResponse.json({
       success: true,
-      message: 'Warning email sent successfully',
+      message: 'Notification email sent successfully',
       sentTo: MAIL_CONFIG.to,
       studentId: data.studentId
     });
 
   } catch (error) {
     // エラーログの出力
-    console.error('Warning email error:', error);
+    console.error('Notification email error:', error);
 
     // エラーレスポンス
     return NextResponse.json(

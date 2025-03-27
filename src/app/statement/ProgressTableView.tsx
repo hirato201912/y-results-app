@@ -178,7 +178,7 @@ const handleCancelCompletion = async (unitOrderId: number) => {
       // 1. 進捗の更新
       await onProgressUpdate(unitOrderId, { homework_status: status });
 
-      // やってきていない場合のみイエローカード処理
+      // やってきていない場合のみ宿題忘れメーター処理
       if (status === "やってきていない") {
         try {
           // 2. bomb countを更新
@@ -196,13 +196,13 @@ const handleCancelCompletion = async (unitOrderId: number) => {
           );
 
           if (!updateBombResponse.ok) {
-            throw new Error('イエローカードの更新に失敗しました');
+            throw new Error('宿題忘れメーターの更新に失敗しました');
           }
 
           const updateBombResult = await updateBombResponse.json();
 
           if (!updateBombResult.success) {
-            throw new Error(updateBombResult.error || 'イエローカードの更新に失敗しました');
+            throw new Error(updateBombResult.error || '宿題忘れメーターの更新に失敗しました');
           }
 
           // 親コンポーネントのbomb countを更新
@@ -236,18 +236,18 @@ const handleCancelCompletion = async (unitOrderId: number) => {
                 throw new Error(emailResult.error || '警告メールの送信に失敗しました');
               }
 
-              showToast('イエローカードが3枚になりました。担当者にメールで通知しました。', 'warning');
+              showToast('宿題忘れメーターが3枚になりました。担当者にメールで通知しました。', 'warning');
             } catch (emailError) {
               console.error('Failed to send warning email:', emailError);
-              showToast('イエローカードが3枚になりました。メール通知に失敗しました。', 'error');
+              showToast('宿題忘れメーターが3枚になりました。メール通知に失敗しました。', 'error');
             }
           } else {
             // 通常の更新時
-            showToast(`イエローカード: ${updateBombResult.bombCount}枚`, 'warning');
+            showToast(`宿題忘れメーター: ${updateBombResult.bombCount}枚`, 'warning');
           }
         } catch (error) {
           console.error('Bomb count update error:', error);
-          showToast(error instanceof Error ? error.message : 'イエローカードの更新に失敗しました', 'error');
+          showToast(error instanceof Error ? error.message : '宿題忘れメーターの更新に失敗しました', 'error');
         }
       }
     } catch (error) {

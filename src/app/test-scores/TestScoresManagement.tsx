@@ -132,7 +132,7 @@ const TestScoresManagement = () => {
   
         // スコア一覧を取得
         const scoresRes = await fetch(
-          `https://mikawayatsuhashi.sakura.ne.jp/cr_get_student_test_scores.php?student_id=${student_id}&api_key=${api_key}`
+          `https://mikawayatsuhashi.sakura.ne.jp/y_get_student_test_scores.php?student_id=${student_id}&api_key=${api_key}`
         )
         if (!scoresRes.ok) {
           throw new Error('テストスコアの取得に失敗しました')
@@ -271,7 +271,7 @@ const TestScoresManagement = () => {
       }
 
       const response = await fetch(
-        `https://mikawayatsuhashi.sakura.ne.jp/cr_get_student_test_scores.php?student_id=${student_id}&api_key=${api_key}`
+        `https://mikawayatsuhashi.sakura.ne.jp/y_get_student_test_scores.php?student_id=${student_id}&api_key=${api_key}`
       )
       
       if (!response.ok) {
@@ -466,7 +466,7 @@ const TestScoresManagement = () => {
       }
   
       const response = await fetch(
-        'https://mikawayatsuhashi.sakura.ne.jp/cr_save_test_scores.php',
+        'https://mikawayatsuhashi.sakura.ne.jp/y_save_test_scores.php',
         {
           method: 'POST',
           body: formData,

@@ -115,7 +115,7 @@ function LessonProgressTable({
     try {
       setIsSubmittingComment(true);
 
-      const response = await fetch('https://mikawayatsuhashi.sakura.ne.jp/cr_save_comment.php', {
+      const response = await fetch('https://mikawayatsuhashi.sakura.ne.jp/y_save_comment.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +189,7 @@ function LessonProgressTable({
       };
 
       const response = await fetch(
-        'https://mikawayatsuhashi.sakura.ne.jp/statement_update_cr_student_progress.php',
+        'https://mikawayatsuhashi.sakura.ne.jp/statement_update_y_student_progress.php',
         {
           method: 'POST',
           headers: {
@@ -233,14 +233,14 @@ function LessonProgressTable({
 
       const [progressResponse, bombResponse] = await Promise.all([
         fetch(
-          `https://mikawayatsuhashi.sakura.ne.jp/statement_get_cr_student_progress.php?` +
+          `https://mikawayatsuhashi.sakura.ne.jp/statement_get_y_student_progress.php?` +
           `student_id=${studentId}&` +
           `school_id=${schoolId}&` +
           `grade_id=${gradeId}&` +
           `subject=${encodeURIComponent(subject)}`
         ),
         fetch(
-          `https://mikawayatsuhashi.sakura.ne.jp/cr_get_bomb_count.php?student_id=${studentId}`
+          `https://mikawayatsuhashi.sakura.ne.jp/y_get_bomb_count.php?student_id=${studentId}`
         )
       ]);
 

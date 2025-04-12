@@ -203,7 +203,7 @@ const InlineStudentInstruction: React.FC<InlineStudentInstructionProps> = ({ stu
         ) : (
           <div>
             {instruction ? (
-              <div className="p-4 bg-[#4AC0B9]/5 border border-[#4AC0B9]/20 rounded-lg whitespace-pre-wrap text-red-700 shadow-sm">
+              <div className="p-4 bg-[#4AC0B9]/5 border border-[#4AC0B9]/20 rounded-lg whitespace-pre-wrap text-red-500 shadow-sm">
                 {instruction}
               </div>
             ) : (

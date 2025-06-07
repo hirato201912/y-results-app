@@ -9,11 +9,14 @@ import {
   FaExclamationCircle,
   FaCheckCircle,
   FaSpinner,
+  FaChartLine, // この行を移動
 } from 'react-icons/fa'
 
 import ScoreForm from './ScoreForm'
 import EditableScoreCard from './EditableScoreCard' // 新しく追加
 import EditableTotalScoreCard from './EditableTotalScoreCard' // 新しく追加
+import SubjectRadarChart from './RadarChart'
+import AbilityIndicator from './AbilityIndicator'
 
 interface TestScore {
   id?: number;
@@ -94,6 +97,7 @@ const TestScoresManagement = () => {
   const [showHistory, setShowHistory] = useState(false)
   const [notification, setNotification] = useState<Notification | null>(null)
   const [isValidAccess, setIsValidAccess] = useState(false)
+  const [showRadarChart, setShowRadarChart] = useState<{ [key: number]: boolean }>({}) // 追加
   const [currentScore, setCurrentScore] = useState<Partial<TestScore>>({
     test_name: '',
     japanese_score: null,
@@ -115,49 +119,56 @@ const TestScoresManagement = () => {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  // スコア更新のコールバック関数
-  const handleScoreUpdate = (subjectKey: string, newScore: number | null) => {
-    setScores(prevScores => 
-      prevScores.map(score => {
-        if (score.test_definition_id === testDefinitions[score.test_definition_id]?.id) {
-          const updatedScore = {
-            ...score,
-            [subjectKey]: newScore
-          }
-          
-          // 合計点の再計算
-          const subjects = ['japanese_score', 'math_score', 'english_score', 'science_score', 'social_score']
-          const validScores = subjects.filter(subject => {
-            const s = updatedScore[subject as keyof TestScore]
-            return typeof s === 'number' && s > 0
-          })
-          
-          if (validScores.length === 5) {
-            updatedScore.total_score = subjects.reduce((sum, subject) => {
-              const s = updatedScore[subject as keyof TestScore] as number
-              return sum + (s || 0)
-            }, 0)
-          } else {
-            updatedScore.total_score = null
-          }
-          
-          return updatedScore
+  // toggleRadarChart関数を追加
+  const toggleRadarChart = (scoreId: number) => {
+    setShowRadarChart(prev => ({
+      ...prev,
+      [scoreId]: !prev[scoreId]
+    }))
+  }
+// スコア更新のコールバック関数
+const handleScoreUpdate = (subjectKey: string, newScore: number | null) => {
+  setScores(prevScores => 
+    prevScores.map(score => {
+      if (score.test_definition_id === testDefinitions[score.test_definition_id]?.id) {
+        const updatedScore = {
+          ...score,
+          [subjectKey]: newScore
         }
-        return score
-      })
-    )
-  }
+        
+        // 合計点の再計算
+        const subjects = ['japanese_score', 'math_score', 'english_score', 'science_score', 'social_score']
+        const validScores = subjects.filter(subject => {
+          const s = updatedScore[subject as keyof TestScore]
+          return typeof s === 'number' && s > 0
+        })
+        
+        if (validScores.length === 5) {
+          updatedScore.total_score = subjects.reduce((sum, subject) => {
+            const s = updatedScore[subject as keyof TestScore] as number
+            return sum + (s || 0)
+          }, 0)
+        } else {
+          updatedScore.total_score = null
+        }
+        
+        return updatedScore
+      }
+      return score
+    })
+  )
+}
 
-  // 順位更新のコールバック関数
-  const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) => {
-    setScores(prevScores => 
-      prevScores.map(score => 
-        score.test_definition_id === testDefinitionId
-          ? { ...score, class_rank: newRank }
-          : score
-      )
+// 順位更新のコールバック関数
+const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) => {
+  setScores(prevScores => 
+    prevScores.map(score => 
+      score.test_definition_id === testDefinitionId
+        ? { ...score, class_rank: newRank }
+        : score
     )
-  }
+  )
+}
 
   useEffect(() => {
     const validateAndInitialize = async () => {
@@ -662,7 +673,7 @@ const TestScoresManagement = () => {
               onInputChange={handleInputChange}
               isSaving={saving}
             />
-          ) : (
+      ) : (
             <div className="space-y-8">
               {/* 編集可能履歴の説明 */}
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">
@@ -681,6 +692,12 @@ const TestScoresManagement = () => {
                 </div>
               </div>
 
+              {/* 実力値表示コンポーネントを追加 */}
+              <AbilityIndicator
+                allScores={scores}
+                studentName={studentName}
+              />
+
               {scores.length > 0 ? (
                 scores.map((score, idx) => {
                   const definition = testDefinitions[score.test_definition_id]
@@ -696,6 +713,15 @@ const TestScoresManagement = () => {
                   const dateText = formatDate(definition.scheduled_date)
                   const studentId = parseInt(searchParams.get('student_id') || '0')
 
+                  // レーダーチャート用のデータを準備
+                  const averageScores = {
+                    japanese: getAverageScore(definition, gradeId, 'japanese'),
+                    math: getAverageScore(definition, gradeId, 'math'),
+                    english: getAverageScore(definition, gradeId, 'english'),
+                    science: getAverageScore(definition, gradeId, 'science'),
+                    social: getAverageScore(definition, gradeId, 'social')
+                  }
+
                   return (
                     <div
                       key={score.id}
@@ -705,7 +731,44 @@ const TestScoresManagement = () => {
                         <h3 className="text-xl font-bold text-[#4AC0B9]">
                           {score.test_name}（{dateText}）
                         </h3>
+                        
+                        {/* レーダーチャート表示切り替えボタン */}
+                        <button
+                          onClick={() => toggleRadarChart(score.id || 0)}
+                          className="px-3 py-1 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 
+                            transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+                        >
+                          <FaChartLine className="w-3 h-3" />
+                          <span>
+                            {showRadarChart[score.id || 0] ? 'チャートを隠す' : 'チャートを表示'}
+                          </span>
+                        </button>
                       </div>
+
+                      {/* レーダーチャート（表示切り替え可能） */}
+                      {showRadarChart[score.id || 0] && (
+                        <div className="mb-6">
+                          <SubjectRadarChart
+                            currentScore={{
+                              japanese_score: score.japanese_score,
+                              math_score: score.math_score,
+                              english_score: score.english_score,
+                              science_score: score.science_score,
+                              social_score: score.social_score
+                            }}
+                            averageScores={averageScores}
+                            previousScore={previousScore ? {
+                              japanese_score: previousScore.japanese_score,
+                              math_score: previousScore.math_score,
+                              english_score: previousScore.english_score,
+                              science_score: previousScore.science_score,
+                              social_score: previousScore.social_score
+                            } : undefined}
+                            title={`${score.test_name} - 教科別成績分析`}
+                            height={350}
+                          />
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                         <EditableScoreCard

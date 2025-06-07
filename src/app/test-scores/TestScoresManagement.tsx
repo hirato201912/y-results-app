@@ -12,8 +12,8 @@ import {
 } from 'react-icons/fa'
 
 import ScoreForm from './ScoreForm'
-import ScoreCard from './ScoreCard'
-import TotalScoreCard from './TotalScoreCard'
+import EditableScoreCard from './EditableScoreCard' // 新しく追加
+import EditableTotalScoreCard from './EditableTotalScoreCard' // 新しく追加
 
 interface TestScore {
   id?: number;
@@ -52,7 +52,7 @@ interface TestDefinition {
   third_avg_english: number | null
   third_avg_science: number | null
   third_avg_social: number | null
-  provisional?: boolean // 仮のテスト定義かどうかのフラグ
+  provisional?: boolean
 }
 
 interface Notification {
@@ -104,6 +104,61 @@ const TestScoresManagement = () => {
     class_rank: null,
     total_score: null,
   })
+
+  // showToast関数を追加
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setNotification({
+      show: true,
+      message,
+      type,
+    })
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  // スコア更新のコールバック関数
+  const handleScoreUpdate = (subjectKey: string, newScore: number | null) => {
+    setScores(prevScores => 
+      prevScores.map(score => {
+        if (score.test_definition_id === testDefinitions[score.test_definition_id]?.id) {
+          const updatedScore = {
+            ...score,
+            [subjectKey]: newScore
+          }
+          
+          // 合計点の再計算
+          const subjects = ['japanese_score', 'math_score', 'english_score', 'science_score', 'social_score']
+          const validScores = subjects.filter(subject => {
+            const s = updatedScore[subject as keyof TestScore]
+            return typeof s === 'number' && s > 0
+          })
+          
+          if (validScores.length === 5) {
+            updatedScore.total_score = subjects.reduce((sum, subject) => {
+              const s = updatedScore[subject as keyof TestScore] as number
+              return sum + (s || 0)
+            }, 0)
+          } else {
+            updatedScore.total_score = null
+          }
+          
+          return updatedScore
+        }
+        return score
+      })
+    )
+  }
+
+  // 順位更新のコールバック関数
+  const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) => {
+    setScores(prevScores => 
+      prevScores.map(score => 
+        score.test_definition_id === testDefinitionId
+          ? { ...score, class_rank: newRank }
+          : score
+      )
+    )
+  }
+
   useEffect(() => {
     const validateAndInitialize = async () => {
       try {
@@ -191,7 +246,6 @@ const TestScoresManagement = () => {
         });
         
         // 現在の年度のテスト定義がなければ、前年度のテスト定義をコピーして年度を更新
-        // ここを修正: someメソッドの引数にも型アノテーションを追加
         if (!formDefs.some((def: TestDefinition) => def.test_name.includes(`${currentYear}年度`))) {
           // 前年度の同じ学年のテスト定義を検索
           const previousYearDefs = allDefsData.definitions.filter((def: TestDefinition) => {
@@ -610,6 +664,23 @@ const TestScoresManagement = () => {
             />
           ) : (
             <div className="space-y-8">
+              {/* 編集可能履歴の説明 */}
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-700">
+                      🖱️ <strong>点数や順位をクリックすると直接編集できます！</strong><br/>
+                      間違いを見つけたら、該当する箇所をクリックして修正してください。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {scores.length > 0 ? (
                 scores.map((score, idx) => {
                   const definition = testDefinitions[score.test_definition_id]
@@ -623,6 +694,7 @@ const TestScoresManagement = () => {
                   // 表示する学年IDはテスト定義の学年IDを使用
                   const gradeId = definition.grade_id
                   const dateText = formatDate(definition.scheduled_date)
+                  const studentId = parseInt(searchParams.get('student_id') || '0')
 
                   return (
                     <div
@@ -636,8 +708,9 @@ const TestScoresManagement = () => {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                        <ScoreCard
+                        <EditableScoreCard
                           subject="国語"
+                          subjectKey="japanese_score"
                           score={score.japanese_score}
                           average={getAverageScore(definition, gradeId, 'japanese')}
                           previousScore={previousScore?.japanese_score ?? null}
@@ -647,9 +720,14 @@ const TestScoresManagement = () => {
                                 getAverageScore(previousDefinition, previousDefinition.grade_id, 'japanese')
                               : undefined
                           }
+                          testId={score.test_definition_id}
+                          studentId={studentId}
+                          onScoreUpdate={handleScoreUpdate}
+                          showToast={showToast}
                         />
-                        <ScoreCard
+                        <EditableScoreCard
                           subject="数学"
+                          subjectKey="math_score"
                           score={score.math_score}
                           average={getAverageScore(definition, gradeId, 'math')}
                           previousScore={previousScore?.math_score ?? null}
@@ -659,9 +737,14 @@ const TestScoresManagement = () => {
                                 getAverageScore(previousDefinition, previousDefinition.grade_id, 'math')
                               : undefined
                           }
+                          testId={score.test_definition_id}
+                          studentId={studentId}
+                          onScoreUpdate={handleScoreUpdate}
+                          showToast={showToast}
                         />
-                        <ScoreCard
+                        <EditableScoreCard
                           subject="英語"
+                          subjectKey="english_score"
                           score={score.english_score}
                           average={getAverageScore(definition, gradeId, 'english')}
                           previousScore={previousScore?.english_score ?? null}
@@ -671,9 +754,14 @@ const TestScoresManagement = () => {
                                 getAverageScore(previousDefinition, previousDefinition.grade_id, 'english')
                               : undefined
                           }
+                          testId={score.test_definition_id}
+                          studentId={studentId}
+                          onScoreUpdate={handleScoreUpdate}
+                          showToast={showToast}
                         />
-                        <ScoreCard
+                        <EditableScoreCard
                           subject="理科"
+                          subjectKey="science_score"
                           score={score.science_score}
                           average={getAverageScore(definition, gradeId, 'science')}
                           previousScore={previousScore?.science_score ?? null}
@@ -683,9 +771,14 @@ const TestScoresManagement = () => {
                                 getAverageScore(previousDefinition, previousDefinition.grade_id, 'science')
                               : undefined
                           }
+                          testId={score.test_definition_id}
+                          studentId={studentId}
+                          onScoreUpdate={handleScoreUpdate}
+                          showToast={showToast}
                         />
-                        <ScoreCard
+                        <EditableScoreCard
                           subject="社会"
+                          subjectKey="social_score"
                           score={score.social_score}
                           average={getAverageScore(definition, gradeId, 'social')}
                           previousScore={previousScore?.social_score ?? null}
@@ -695,14 +788,22 @@ const TestScoresManagement = () => {
                                 getAverageScore(previousDefinition, previousDefinition.grade_id, 'social')
                               : undefined
                           }
+                          testId={score.test_definition_id}
+                          studentId={studentId}
+                          onScoreUpdate={handleScoreUpdate}
+                          showToast={showToast}
                         />
                       </div>
 
-                      <TotalScoreCard
+                      <EditableTotalScoreCard
                         score={score.total_score}
                         previousScore={previousScore?.total_score}
                         rank={score.class_rank}
                         previousRank={previousScore?.class_rank}
+                        testId={score.test_definition_id}
+                        studentId={studentId}
+                        onRankUpdate={handleRankUpdate(score.test_definition_id)}
+                        showToast={showToast}
                       />
                     </div>
                   )

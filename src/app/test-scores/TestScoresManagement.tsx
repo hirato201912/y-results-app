@@ -109,7 +109,8 @@ const TestScoresManagement = () => {
     total_score: null,
   })
 
-  const [showAbilityIndicator, setShowAbilityIndicator] = useState(true)
+ // 初期表示を非表示に変更
+const [showAbilityIndicator, setShowAbilityIndicator] = useState(false) // true → false に変更
 
   // 他の関数定義の後に追加 ↓
   const toggleAbilityIndicator = () => {
@@ -686,7 +687,7 @@ let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
                 isSaving={saving}
               />
             </>
-     ) : (
+  ) : (
             <div className="space-y-8">
               {/* 実力値表示コントロールパネル */}
               <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-4">
@@ -698,7 +699,7 @@ let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-teal-900">📊 総合実力分析</h3>
+                      <h3 className="text-lg font-semibold text-teal-900">総合実力分析</h3>
                       <p className="text-sm text-teal-600">各教科の実力値とトレンドを表示します</p>
                     </div>
                   </div>

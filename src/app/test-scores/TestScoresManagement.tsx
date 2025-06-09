@@ -109,6 +109,14 @@ const TestScoresManagement = () => {
     total_score: null,
   })
 
+  const [showAbilityIndicator, setShowAbilityIndicator] = useState(true)
+
+  // 他の関数定義の後に追加 ↓
+  const toggleAbilityIndicator = () => {
+    setShowAbilityIndicator(prev => !prev)
+  }
+
+
   // showToast関数を追加
   const showToast = (message: string, type: 'success' | 'error') => {
     setNotification({
@@ -240,21 +248,24 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
         const currentGradeId = parseInt(grade_id);
         const currentYear = new Date().getFullYear();
         
-        // 現在の学年のテストと前年度の前学年のテストをフィルタリング
-        let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
-          // テスト名から年度を抽出
-          const yearMatch = def.test_name.match(/(\d{4})年度/);
-          const testYear = yearMatch ? parseInt(yearMatch[1]) : 0;
-          
-          // 現在の年度のテストで現在の学年のもの
-          const isCurrentYearCurrentGrade = (testYear === currentYear && def.grade_id === currentGradeId);
-          
-          // 前年度のテストで前学年のもの(3年生なら2年生、2年生なら1年生のテスト)
-          const previousGradeId = currentGradeId < 7 ? currentGradeId + 1 : 0;
-          const isPreviousYearPreviousGrade = (testYear === currentYear - 1 && def.grade_id === previousGradeId);
-          
-          return isCurrentYearCurrentGrade || isPreviousYearPreviousGrade;
-        });
+// 修正版のフィルタリングロジック
+let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
+  const yearMatch = def.test_name.match(/(\d{4})年度/);
+  const testYear = yearMatch ? parseInt(yearMatch[1]) : 0;
+  
+  // 現在の年度のテストで現在の学年のもの
+  const isCurrentYearCurrentGrade = (testYear === currentYear && def.grade_id === currentGradeId);
+  
+  // 前年度のテストで前学年のもの
+  const previousGradeId = currentGradeId < 7 ? currentGradeId + 1 : 0;
+  const isPreviousYearPreviousGrade = (testYear === currentYear - 1 && def.grade_id === previousGradeId);
+  
+  // 2年前のテストで2学年前のもの（中3の場合の1年生時代）
+  const twoPreviousGradeId = currentGradeId < 6 ? currentGradeId + 2 : 0;
+  const isTwoPreviousYearTwoPreviousGrade = (testYear === currentYear - 2 && def.grade_id === twoPreviousGradeId);
+  
+  return isCurrentYearCurrentGrade || isPreviousYearPreviousGrade || isTwoPreviousYearTwoPreviousGrade;
+});
         
         // 現在の年度のテスト定義がなければ、前年度のテスト定義をコピーして年度を更新
         if (!formDefs.some((def: TestDefinition) => def.test_name.includes(`${currentYear}年度`))) {
@@ -664,40 +675,96 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
             </button>
           </div>
 
-          {!showHistory ? (
-            <ScoreForm
-              currentScore={currentScore}
-              testDefinitions={formTestDefinitions}
-              existingScores={scores}
-              onSubmit={handleSubmit}
-              onInputChange={handleInputChange}
-              isSaving={saving}
-            />
-      ) : (
+     {!showHistory ? (
+            <>
+              <ScoreForm
+                currentScore={currentScore}
+                testDefinitions={formTestDefinitions}
+                existingScores={scores}
+                onSubmit={handleSubmit}
+                onInputChange={handleInputChange}
+                isSaving={saving}
+              />
+            </>
+     ) : (
             <div className="space-y-8">
-              {/* 編集可能履歴の説明 */}
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
+              {/* 実力値表示コントロールパネル */}
+              <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 bg-teal-100 rounded-full">
+                      <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-teal-900">📊 総合実力分析</h3>
+                      <p className="text-sm text-teal-600">各教科の実力値とトレンドを表示します</p>
+                    </div>
                   </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-blue-700">
-                      🖱️ <strong>点数や順位をクリックすると直接編集できます！</strong><br/>
-                      間違いを見つけたら、該当する箇所をクリックして修正してください。
-                    </p>
+                  
+                  {/* スタイリッシュなトグルスイッチ */}
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-medium transition-colors ${showAbilityIndicator ? 'text-teal-700' : 'text-gray-500'}`}>
+                      {showAbilityIndicator ? '表示中' : '非表示'}
+                    </span>
+                    <button
+                      onClick={toggleAbilityIndicator}
+                      className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                        showAbilityIndicator ? 'bg-[#4AC0B9]' : 'bg-gray-300'
+                      }`}
+                      role="switch"
+                      aria-checked={showAbilityIndicator}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                          showAbilityIndicator ? 'translate-x-8' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* アニメーション付きの説明テキスト */}
+                <div className={`mt-3 overflow-hidden transition-all duration-300 ease-in-out ${
+                  showAbilityIndicator ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
+                }`}>
+                  <div className="flex items-center gap-2 text-sm text-teal-600 bg-white/50 rounded-md p-2">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>最新3回のテスト結果を基に、各教科の実力値とトレンドを分析・表示します</span>
                   </div>
                 </div>
               </div>
 
-              {/* 実力値表示コンポーネントを追加 */}
-              <AbilityIndicator
-                allScores={scores}
-                studentName={studentName}
-              />
+              {/* 実力値表示コンポーネント（アニメーション付き） */}
+              <div className={`transition-all duration-500 ease-in-out ${
+                showAbilityIndicator 
+                  ? 'opacity-100 transform translate-y-0' 
+                  : 'opacity-0 transform -translate-y-4 pointer-events-none'
+              }`}>
+                {showAbilityIndicator && (
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#4AC0B9] to-teal-600 px-6 py-3">
+                      <h3 className="text-white font-semibold flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        {studentName}さんの総合実力分析
+                      </h3>
+                    </div>
+                    <div className="p-6">
+                      <AbilityIndicator
+                        allScores={scores}
+                        studentName={studentName}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
+              {/* テスト結果一覧 */}
               {scores.length > 0 ? (
                 scores.map((score, idx) => {
                   const definition = testDefinitions[score.test_definition_id]
@@ -708,12 +775,10 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
                     ? testDefinitions[previousScore.test_definition_id]
                     : null
                   
-                  // 表示する学年IDはテスト定義の学年IDを使用
                   const gradeId = definition.grade_id
                   const dateText = formatDate(definition.scheduled_date)
                   const studentId = parseInt(searchParams.get('student_id') || '0')
 
-                  // レーダーチャート用のデータを準備
                   const averageScores = {
                     japanese: getAverageScore(definition, gradeId, 'japanese'),
                     math: getAverageScore(definition, gradeId, 'math'),
@@ -732,7 +797,6 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
                           {score.test_name}（{dateText}）
                         </h3>
                         
-                        {/* レーダーチャート表示切り替えボタン */}
                         <button
                           onClick={() => toggleRadarChart(score.id || 0)}
                           className="px-3 py-1 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 
@@ -745,7 +809,7 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
                         </button>
                       </div>
 
-                      {/* レーダーチャート（表示切り替え可能） */}
+                      {/* レーダーチャート */}
                       {showRadarChart[score.id || 0] && (
                         <div className="mb-6">
                           <SubjectRadarChart
@@ -770,6 +834,7 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
                         </div>
                       )}
 
+                      {/* 編集可能なスコアカード */}
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                         <EditableScoreCard
                           subject="国語"
@@ -858,6 +923,7 @@ const handleRankUpdate = (testDefinitionId: number) => (newRank: number | null) 
                         />
                       </div>
 
+                      {/* 編集可能な合計スコアカード */}
                       <EditableTotalScoreCard
                         score={score.total_score}
                         previousScore={previousScore?.total_score}

@@ -14,7 +14,7 @@ interface WarningMailRequest {
 // メール送信のための設定
 const MAIL_CONFIG = {
   from: 'soroban.chiryu@gmail.com',
-  to: 'chiryu.west@gmail.com',
+   to: 'meikai.yatsuhashi@gmail.com',
   companyName: '三河八橋駅前校',
   companyEmail: '',
   companyPhone: ''

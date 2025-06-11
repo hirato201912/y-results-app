@@ -766,17 +766,17 @@ let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
               </div>
 
               {/* テスト結果一覧 */}
-              {scores.length > 0 ? (
-                scores.map((score, idx) => {
-                  const definition = testDefinitions[score.test_definition_id]
-                  if (!definition) return null
-                  
-                  const previousScore = scores[idx + 1]
-                  const previousDefinition = previousScore 
-                    ? testDefinitions[previousScore.test_definition_id]
-                    : null
-                  
-                  const gradeId = definition.grade_id
+{scores.length > 0 ? (
+  scores.map((score, idx) => {
+    const definition = testDefinitions[score.test_definition_id]
+    if (!definition) return null
+    
+    const previousScore = scores[idx + 1]
+    const previousDefinition = previousScore 
+      ? testDefinitions[previousScore.test_definition_id]
+      : null
+    
+    const gradeId = definition.grade_id
                   const dateText = formatDate(definition.scheduled_date)
                   const studentId = parseInt(searchParams.get('student_id') || '0')
 
@@ -788,12 +788,12 @@ let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
                     social: getAverageScore(definition, gradeId, 'social')
                   }
 
-                  return (
-                    <div
-                      key={score.id}
-                      className="bg-white rounded-lg shadow-sm p-6 border border-gray-100"
-                    >
-                      <div className="flex justify-between items-center mb-4">
+    return (
+      <div
+        key={score.id}
+        className="bg-white rounded-lg shadow-sm p-6 border border-gray-100"
+      >
+        <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-bold text-[#4AC0B9]">
                           {score.test_name}（{dateText}）
                         </h3>
@@ -831,118 +831,118 @@ let formDefs = allDefsData.definitions.filter((def: TestDefinition) => {
                             } : undefined}
                             title={`${score.test_name} - 教科別成績分析`}
                             height={350}
-                          />
-                        </div>
+          />
+        </div>
                       )}
 
                       {/* 編集可能なスコアカード */}
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                         <EditableScoreCard
-                          subject="国語"
+            subject="国語"
                           subjectKey="japanese_score"
-                          score={score.japanese_score}
-                          average={getAverageScore(definition, gradeId, 'japanese')}
-                          previousScore={previousScore?.japanese_score ?? null}
-                          previousDiffFromAvg={
-                            previousScore && previousDefinition
-                              ? (previousScore.japanese_score ?? 0) - 
-                                getAverageScore(previousDefinition, previousDefinition.grade_id, 'japanese')
-                              : undefined
-                          }
+            score={score.japanese_score}
+            average={getAverageScore(definition, gradeId, 'japanese')}
+            previousScore={previousScore?.japanese_score ?? null}
+            previousDiffFromAvg={
+              previousScore && previousDefinition
+                ? (previousScore.japanese_score ?? 0) - 
+                  getAverageScore(previousDefinition, previousDefinition.grade_id, 'japanese')
+                : undefined
+            }
                           testId={score.test_definition_id}
                           studentId={studentId}
                           onScoreUpdate={handleScoreUpdate}
                           showToast={showToast}
-                        />
+          />
                         <EditableScoreCard
-                          subject="数学"
+            subject="数学"
                           subjectKey="math_score"
-                          score={score.math_score}
-                          average={getAverageScore(definition, gradeId, 'math')}
-                          previousScore={previousScore?.math_score ?? null}
-                          previousDiffFromAvg={
-                            previousScore && previousDefinition
-                              ? (previousScore.math_score ?? 0) - 
-                                getAverageScore(previousDefinition, previousDefinition.grade_id, 'math')
-                              : undefined
-                          }
+            score={score.math_score}
+            average={getAverageScore(definition, gradeId, 'math')}
+            previousScore={previousScore?.math_score ?? null}
+            previousDiffFromAvg={
+              previousScore && previousDefinition
+                ? (previousScore.math_score ?? 0) - 
+                  getAverageScore(previousDefinition, previousDefinition.grade_id, 'math')
+                : undefined
+            }
                           testId={score.test_definition_id}
                           studentId={studentId}
                           onScoreUpdate={handleScoreUpdate}
                           showToast={showToast}
-                        />
+          />
                         <EditableScoreCard
-                          subject="英語"
+            subject="英語"
                           subjectKey="english_score"
-                          score={score.english_score}
-                          average={getAverageScore(definition, gradeId, 'english')}
-                          previousScore={previousScore?.english_score ?? null}
-                          previousDiffFromAvg={
-                            previousScore && previousDefinition
-                              ? (previousScore.english_score ?? 0) - 
-                                getAverageScore(previousDefinition, previousDefinition.grade_id, 'english')
-                              : undefined
-                          }
+            score={score.english_score}
+            average={getAverageScore(definition, gradeId, 'english')}
+            previousScore={previousScore?.english_score ?? null}
+            previousDiffFromAvg={
+              previousScore && previousDefinition
+                ? (previousScore.english_score ?? 0) - 
+                  getAverageScore(previousDefinition, previousDefinition.grade_id, 'english')
+                : undefined
+            }
                           testId={score.test_definition_id}
                           studentId={studentId}
                           onScoreUpdate={handleScoreUpdate}
                           showToast={showToast}
-                        />
+          />
                         <EditableScoreCard
-                          subject="理科"
+            subject="理科"
                           subjectKey="science_score"
-                          score={score.science_score}
-                          average={getAverageScore(definition, gradeId, 'science')}
-                          previousScore={previousScore?.science_score ?? null}
-                          previousDiffFromAvg={
-                            previousScore && previousDefinition
-                              ? (previousScore.science_score ?? 0) - 
-                                getAverageScore(previousDefinition, previousDefinition.grade_id, 'science')
-                              : undefined
-                          }
+            score={score.science_score}
+            average={getAverageScore(definition, gradeId, 'science')}
+            previousScore={previousScore?.science_score ?? null}
+            previousDiffFromAvg={
+              previousScore && previousDefinition
+                ? (previousScore.science_score ?? 0) - 
+                  getAverageScore(previousDefinition, previousDefinition.grade_id, 'science')
+                : undefined
+            }
                           testId={score.test_definition_id}
                           studentId={studentId}
                           onScoreUpdate={handleScoreUpdate}
                           showToast={showToast}
-                        />
+          />
                         <EditableScoreCard
-                          subject="社会"
+            subject="社会"
                           subjectKey="social_score"
-                          score={score.social_score}
-                          average={getAverageScore(definition, gradeId, 'social')}
-                          previousScore={previousScore?.social_score ?? null}
-                          previousDiffFromAvg={
-                            previousScore && previousDefinition
-                              ? (previousScore.social_score ?? 0) - 
-                                getAverageScore(previousDefinition, previousDefinition.grade_id, 'social')
-                              : undefined
-                          }
+            score={score.social_score}
+            average={getAverageScore(definition, gradeId, 'social')}
+            previousScore={previousScore?.social_score ?? null}
+            previousDiffFromAvg={
+              previousScore && previousDefinition
+                ? (previousScore.social_score ?? 0) - 
+                  getAverageScore(previousDefinition, previousDefinition.grade_id, 'social')
+                : undefined
+            }
                           testId={score.test_definition_id}
                           studentId={studentId}
                           onScoreUpdate={handleScoreUpdate}
                           showToast={showToast}
-                        />
-                      </div>
+          />
+        </div>
 
                       {/* 編集可能な合計スコアカード */}
                       <EditableTotalScoreCard
-                        score={score.total_score}
-                        previousScore={previousScore?.total_score}
-                        rank={score.class_rank}
-                        previousRank={previousScore?.class_rank}
+          score={score.total_score}
+          previousScore={previousScore?.total_score}
+          rank={score.class_rank}
+          previousRank={previousScore?.class_rank}
                         testId={score.test_definition_id}
                         studentId={studentId}
                         onRankUpdate={handleRankUpdate(score.test_definition_id)}
                         showToast={showToast}
-                      />
-                    </div>
-                  )
-                })
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  テストの記録がありません
-                </div>
-              )}
+        />
+      </div>
+    )
+  })
+) : (
+  <div className="text-center text-gray-500 py-8">
+    テストの記録がありません
+  </div>
+)}
             </div>
           )}
         </div>

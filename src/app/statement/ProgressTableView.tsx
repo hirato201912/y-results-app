@@ -172,89 +172,111 @@ const handleCancelCompletion = async (unitOrderId: number) => {
       });
     }
   };
+const handleHomeworkCheck = async (unitOrderId: number, status: "未チェック" | "やってきている" | "やってきていない") => {
+  try {
+    // 1. 進捗の更新
+    await onProgressUpdate(unitOrderId, { homework_status: status });
 
-  const handleHomeworkCheck = async (unitOrderId: number, status: "未チェック" | "やってきている" | "やってきていない") => {
-    try {
-      // 1. 進捗の更新
-      await onProgressUpdate(unitOrderId, { homework_status: status });
+    // やってきていない場合のみ宿題忘れメーター処理
+    if (status === "やってきていない") {
+      try {
+        // 2. bomb countを更新
+        const updateBombResponse = await fetch(
+          'https://mikawayatsuhashi.sakura.ne.jp/y_update_bomb_count.php',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              student_id: studentId
+            })
+          }
+        );
 
-      // やってきていない場合のみ宿題忘れメーター処理
-      if (status === "やってきていない") {
-        try {
-          // 2. bomb countを更新
-          const updateBombResponse = await fetch(
-            'https://mikawayatsuhashi.sakura.ne.jp/y_update_bomb_count.php',
-            {
+        if (!updateBombResponse.ok) {
+          throw new Error('宿題忘れメーターの更新に失敗しました');
+        }
+
+        const updateBombResult = await updateBombResponse.json();
+
+        if (!updateBombResult.success) {
+          throw new Error(updateBombResult.error || '宿題忘れメーターの更新に失敗しました');
+        }
+
+        // 親コンポーネントのbomb countを更新
+        if (onBombCountUpdate) {
+          onBombCountUpdate(updateBombResult.bombCount);
+        }
+
+        // 4枚目から5枚目（リセット）になったときにメール送信
+        if (updateBombResult.previousBombCount === 4 && 
+            updateBombResult.bombCount === 0 && 
+            updateBombResult.resetted) {
+          
+          try {
+            console.log('5枚達成でリセット検出、メール送信開始');
+            
+            // まず即座に5枚達成の通知を表示
+            showToast('宿題忘れメーターが5枚になりました。担当者にメール通知中...', 'warning');
+            
+            // メール送信開始の追加表示（アニメーション付き）
+            const loadingToastId = setTimeout(() => {
+              showToast('📧 メール送信中です。しばらくお待ちください...', 'warning');
+            }, 1000);
+            
+            const emailResponse = await fetch('/api/send-warning-mail', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                student_id: studentId
-              })
+                studentName: updateBombResult.studentName,
+                schoolName: SCHOOL_NAMES[updateBombResult.schoolId],
+                gradeName: GRADE_NAMES[updateBombResult.gradeId],
+                homeworkMeterCount: 5,
+                studentId: studentId
+              }),
+            });
+
+            // ローディング表示をクリア
+            clearTimeout(loadingToastId);
+
+            if (!emailResponse.ok) {
+              throw new Error('警告メールの送信に失敗しました');
             }
-          );
 
-          if (!updateBombResponse.ok) {
-            throw new Error('宿題忘れメーターの更新に失敗しました');
-          }
-
-          const updateBombResult = await updateBombResponse.json();
-
-          if (!updateBombResult.success) {
-            throw new Error(updateBombResult.error || '宿題忘れメーターの更新に失敗しました');
-          }
-
-          // 親コンポーネントのbomb countを更新
-          if (onBombCountUpdate) {
-            onBombCountUpdate(updateBombResult.bombCount);
-          }
-
-          // 2枚目から3枚目になったときのみメール送信
-          if (updateBombResult.previousBombCount === 2 && updateBombResult.bombCount === 0) {
-            try {
-              const emailResponse = await fetch('/api/send-warning-mail', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  studentName: updateBombResult.studentName,
-                  schoolName: SCHOOL_NAMES[updateBombResult.schoolId],
-                  gradeName: GRADE_NAMES[updateBombResult.gradeId],
-                  bombCount: 3,
-                  studentId: studentId
-                }),
-              });
-
-              if (!emailResponse.ok) {
-                throw new Error('警告メールの送信に失敗しました');
-              }
-
-              const emailResult = await emailResponse.json();
-              if (!emailResult.success) {
-                throw new Error(emailResult.error || '警告メールの送信に失敗しました');
-              }
-
-              showToast('宿題忘れメーターが3枚になりました。担当者にメールで通知しました。', 'warning');
-            } catch (emailError) {
-              console.error('Failed to send warning email:', emailError);
-              showToast('宿題忘れメーターが3枚になりました。メール通知に失敗しました。', 'error');
+            const emailResult = await emailResponse.json();
+            if (!emailResult.success) {
+              throw new Error(emailResult.error || '警告メールの送信に失敗しました');
             }
-          } else {
-            // 通常の更新時
-            showToast(`宿題忘れメーター: ${updateBombResult.bombCount}枚`, 'warning');
+
+            console.log('メール送信成功:', emailResult);
+            
+            // 成功メッセージ（成功アイコン付き）
+            showToast('✅ 宿題忘れメーターが5枚になりました。担当者にメールで通知完了しました。', 'success');
+            
+          } catch (emailError) {
+            console.error('Failed to send warning email:', emailError);
+            
+            // エラーメッセージ（エラーアイコン付き）
+            showToast('❌ 宿題忘れメーターが5枚になりました。メール通知に失敗しました。', 'error');
           }
-        } catch (error) {
-          console.error('Bomb count update error:', error);
-          showToast(error instanceof Error ? error.message : '宿題忘れメーターの更新に失敗しました', 'error');
+        } else {
+          // 通常の更新時
+          showToast(`宿題忘れメーター: ${updateBombResult.bombCount}枚`, 'warning');
         }
+        
+      } catch (error) {
+        console.error('Bomb count update error:', error);
+        showToast(error instanceof Error ? error.message : '宿題忘れメーターの更新に失敗しました', 'error');
       }
-    } catch (error) {
-      console.error('Error handling homework check:', error);
-      showToast(error instanceof Error ? error.message : '処理に失敗しました', 'error');
     }
-  };
+  } catch (error) {
+    console.error('Error handling homework check:', error);
+    showToast(error instanceof Error ? error.message : '処理に失敗しました', 'error');
+  }
+};
 
   if (loading) {
     return (
